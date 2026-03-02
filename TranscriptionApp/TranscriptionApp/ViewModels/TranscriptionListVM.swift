@@ -35,7 +35,7 @@ final class TranscriptionListVM {
             for: .applicationSupportDirectory, in: .userDomainMask
         ).first!
         let audioDir = appSupport
-            .appendingPathComponent("TranscriptionApp", isDirectory: true)
+            .appendingPathComponent("Voxa", isDirectory: true)
             .appendingPathComponent("Audio", isDirectory: true)
         try? FileManager.default.createDirectory(at: audioDir, withIntermediateDirectories: true)
         return audioDir

@@ -56,7 +56,7 @@ struct SidebarView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Rechercher...")
-        .navigationTitle("Transcription")
+        .navigationTitle("Voxa")
         .toolbar {
             ToolbarItem {
                 Button {

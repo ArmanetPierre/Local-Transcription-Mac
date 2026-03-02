@@ -38,6 +38,10 @@
 		6DBCEF0477E7AA346088AA39 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067649DC07648C9B424559A0 /* MenuBarView.swift */; };
 		BC1A2B3C4D5E6F7089012345 /* PythonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1A2B3C4D5E6F7089012345 /* PythonBridge.swift */; };
 		BC2A3B4C5D6E7F8090123456 /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2A3B4C5D6E7F8090123456 /* OllamaService.swift */; };
+		DE1A2B3C4D5E6F7089012345 /* RecordingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A2B3C4D5E6F7089012345 /* RecordingService.swift */; };
+		DE2A3B4C5D6E7F8090123456 /* RecordingVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2A3B4C5D6E7F8090123456 /* RecordingVM.swift */; };
+		DE3A4B5C6D7E8F9001234567 /* RecordingMenuBarSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3A4B5C6D7E8F9001234567 /* RecordingMenuBarSection.swift */; };
+		EE2A3B4C5D6E7F8090123456 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EE1A2B3C4D5E6F7089012345 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +78,10 @@
 		067649DC07648C9B424559A0 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		BB1A2B3C4D5E6F7089012345 /* PythonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PythonBridge.swift; sourceTree = "<group>"; };
 		BB2A3B4C5D6E7F8090123456 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
+		DD1A2B3C4D5E6F7089012345 /* RecordingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingService.swift; sourceTree = "<group>"; };
+		DD2A3B4C5D6E7F8090123456 /* RecordingVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingVM.swift; sourceTree = "<group>"; };
+		DD3A4B5C6D7E8F9001234567 /* RecordingMenuBarSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingMenuBarSection.swift; sourceTree = "<group>"; };
+		EE1A2B3C4D5E6F7089012345 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 
@@ -142,6 +150,7 @@
 		C9021D231AB2D3D2A155C083 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				EE1A2B3C4D5E6F7089012345 /* Assets.xcassets */,
 				F4886B6A2C8533BF2674052B /* TranscriptionApp.entitlements */,
 			);
 			path = Resources;
@@ -169,6 +178,7 @@
 				E8F90123456789ABCDE1F2A3 /* MeetingReportExporter.swift */,
 				BB2A3B4C5D6E7F8090123456 /* OllamaService.swift */,
 				BB1A2B3C4D5E6F7089012345 /* PythonBridge.swift */,
+				DD1A2B3C4D5E6F7089012345 /* RecordingService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -187,6 +197,7 @@
 		FAA7C910E4BEBB36170F5688 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				DD2A3B4C5D6E7F8090123456 /* RecordingVM.swift */,
 				72C4DBEDAAC2B7226BC5B0EA /* TranscriptionDetailVM.swift */,
 				A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */,
 			);
@@ -219,11 +230,23 @@
 			isa = PBXGroup;
 			children = (
 				067649DC07648C9B424559A0 /* MenuBarView.swift */,
+				DD3A4B5C6D7E8F9001234567 /* RecordingMenuBarSection.swift */,
 			);
 			path = MenuBar;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EE3A4B5C6D7E8F9001234567 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EE2A3B4C5D6E7F8090123456 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		3081C045FE85BABE36A67A45 /* TranscriptionApp */ = {
@@ -232,6 +255,7 @@
 			buildPhases = (
 				9E67BC4977BD9727E0582C72 /* Sources */,
 				646EADEEFE0BA660D6DD194E /* Frameworks */,
+				EE3A4B5C6D7E8F9001234567 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -310,6 +334,9 @@
 				C41B34FEBDEE501329959424 /* TranscriptionRow.swift in Sources */,
 				BC2A3B4C5D6E7F8090123456 /* OllamaService.swift in Sources */,
 				BC1A2B3C4D5E6F7089012345 /* PythonBridge.swift in Sources */,
+				DE1A2B3C4D5E6F7089012345 /* RecordingService.swift in Sources */,
+				DE2A3B4C5D6E7F8090123456 /* RecordingVM.swift in Sources */,
+				DE3A4B5C6D7E8F9001234567 /* RecordingMenuBarSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,14 +416,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Transcription;
+				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa utilise le microphone pour enregistrer votre voix pendant les reunions.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.TranscriptionApp;
-				PRODUCT_NAME = Transcription;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.Voxa;
+				PRODUCT_NAME = Voxa;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -411,14 +439,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Transcription;
+				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa utilise le microphone pour enregistrer votre voix pendant les reunions.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.TranscriptionApp;
-				PRODUCT_NAME = Transcription;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.Voxa;
+				PRODUCT_NAME = Voxa;
 				SDKROOT = macosx;
 			};
 			name = Debug;

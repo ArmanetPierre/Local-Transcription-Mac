@@ -19,12 +19,14 @@ targets:
       - TranscriptionApp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pierre.TranscriptionApp
+        PRODUCT_BUNDLE_IDENTIFIER: com.pierre.Voxa
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
-        INFOPLIST_KEY_CFBundleDisplayName: Transcription
+        INFOPLIST_KEY_CFBundleDisplayName: Voxa
         CODE_SIGN_ENTITLEMENTS: TranscriptionApp/Resources/TranscriptionApp.entitlements
         ENABLE_APP_SANDBOX: false
-        PRODUCT_NAME: Transcription
+        PRODUCT_NAME: Voxa
         GENERATE_INFOPLIST_FILE: true
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Voxa utilise le microphone pour enregistrer votre voix pendant les reunions."
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: false

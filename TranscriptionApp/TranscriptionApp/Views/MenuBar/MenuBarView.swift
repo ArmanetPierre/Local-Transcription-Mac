@@ -2,9 +2,16 @@ import SwiftUI
 
 struct MenuBarView: View {
     let listVM: TranscriptionListVM
+    let recordingVM: RecordingVM
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Section enregistrement
+            RecordingMenuBarSection(recordingVM: recordingVM, listVM: listVM)
+
+            Divider()
+
+            // Section transcription
             if listVM.isProcessing, let project = listVM.currentProject {
                 // Section: En cours
                 processingSection(project: project)
@@ -48,7 +55,7 @@ struct MenuBarView: View {
                     window.makeKeyAndOrderFront(nil)
                 }
             } label: {
-                Label("Ouvrir Transcription", systemImage: "macwindow")
+                Label("Ouvrir Voxa", systemImage: "macwindow")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 4)

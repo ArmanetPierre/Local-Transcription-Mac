@@ -184,7 +184,7 @@ final class MeetingReportExporter: NSObject {
             </div>
             \(bodyHTML)
             <div class="footer">
-                Document genere automatiquement par TranscriptionApp
+                Document genere automatiquement par Voxa
             </div>
         </body>
         </html>
