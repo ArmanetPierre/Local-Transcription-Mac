@@ -132,6 +132,10 @@ struct SetupView: View {
                                 Text("You can skip this — most audio formats will work without it.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                Button("Check again") {
+                                    Task { await manager.checkFFmpeg() }
+                                }
+                                .controlSize(.small)
                             }
                         }
                     }
