@@ -174,12 +174,80 @@ struct TranscriptionDetail: View {
 
     // MARK: - Error View
 
+    private var isHuggingFaceAccessError: Bool {
+        guard let msg = project.errorMessage else { return false }
+        return msg.contains("403") || msg.contains("gated repo") || msg.contains("not in the authorized list")
+    }
+
     private var errorView: some View {
-        ContentUnavailableView {
-            Label("Error", systemImage: "exclamationmark.triangle")
-        } description: {
-            Text(project.errorMessage ?? String(localized: "Unknown error"))
+        VStack(spacing: 16) {
+            Spacer()
+
+            Image(systemName: isHuggingFaceAccessError ? "lock.circle" : "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundStyle(isHuggingFaceAccessError ? .orange : .red)
+
+            if isHuggingFaceAccessError {
+                Text("HuggingFace Model Access Required")
+                    .font(.title2.bold())
+
+                Text("The speaker diarization models require you to accept their terms of use on HuggingFace.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 450)
+
+                VStack(spacing: 10) {
+                    Link(destination: URL(string: "https://huggingface.co/pyannote/speaker-diarization-3.1")!) {
+                        HStack {
+                            Image(systemName: "link")
+                            Text("Accept: pyannote/speaker-diarization-3.1")
+                        }
+                        .frame(width: 320)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Link(destination: URL(string: "https://huggingface.co/pyannote/speaker-diarization-community-1")!) {
+                        HStack {
+                            Image(systemName: "link")
+                            Text("Accept: pyannote/speaker-diarization-community-1")
+                        }
+                        .frame(width: 320)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Link(destination: URL(string: "https://huggingface.co/pyannote/segmentation-3.0")!) {
+                        HStack {
+                            Image(systemName: "link")
+                            Text("Accept: pyannote/segmentation-3.0")
+                        }
+                        .frame(width: 320)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.top, 4)
+
+                Text("Click each link above, sign in to HuggingFace, and click \"Agree and access repository\". Then reimport your audio file.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 450)
+
+            } else {
+                Text("Error")
+                    .font(.title2.bold())
+
+                Text(project.errorMessage ?? String(localized: "Unknown error"))
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 450)
+                    .textSelection(.enabled)
+            }
+
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Empty Segments
