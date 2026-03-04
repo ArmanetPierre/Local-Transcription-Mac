@@ -113,7 +113,7 @@ struct SetupView: View {
                         }
                     }
 
-                    // Step 3: FFmpeg
+                    // Step 3: FFmpeg (required)
                     SetupStepView(
                         number: 3,
                         title: "FFmpeg",
@@ -122,21 +122,50 @@ struct SetupView: View {
                     ) {
                         if case .missing = manager.ffmpegStatus {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("FFmpeg is recommended for full audio format support.")
+                                Text("FFmpeg is required for audio processing.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                Text("brew install ffmpeg")
-                                    .font(.caption.monospaced())
-                                    .padding(6)
-                                    .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
-                                Text("You can skip this — most audio formats will work without it.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+
+                                if manager.homebrewAvailable {
+                                    Button("Install FFmpeg") {
+                                        Task { await manager.installFFmpeg() }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                } else {
+                                    Text("Install Homebrew first, then FFmpeg:")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+                                        .font(.system(size: 10, design: .monospaced))
+                                        .padding(6)
+                                        .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
+                                        .textSelection(.enabled)
+                                    Text("Then restart Voxa.")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
                                 Button("Check again") {
                                     Task { await manager.checkFFmpeg() }
                                 }
                                 .controlSize(.small)
                             }
+                        }
+
+                        if case .installing = manager.ffmpegStatus {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+
+                        if case .failed(let error) = manager.ffmpegStatus {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                            Button("Retry") {
+                                Task { await manager.installFFmpeg() }
+                            }
+                            .controlSize(.small)
                         }
                     }
 
@@ -257,9 +286,13 @@ struct SetupView: View {
         case .installed:
             return String(localized: "FFmpeg found")
         case .missing:
-            return String(localized: "Not found (optional)")
+            return String(localized: "Required — not found")
         case .checking:
             return String(localized: "Checking...")
+        case .installing(let progress):
+            return progress
+        case .failed:
+            return String(localized: "Installation failed")
         default:
             return ""
         }

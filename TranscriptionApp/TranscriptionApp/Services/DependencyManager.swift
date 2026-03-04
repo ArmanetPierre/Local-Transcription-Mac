@@ -36,7 +36,7 @@ final class DependencyManager {
 
     /// True when all required dependencies are ready
     var overallReady: Bool {
-        pythonStatus == .installed && venvStatus == .installed
+        pythonStatus == .installed && venvStatus == .installed && ffmpegStatus == .installed
     }
 
     // MARK: - Standard Paths
@@ -271,6 +271,40 @@ final class DependencyManager {
             // Ignore
         }
         return nil
+    }
+
+    // MARK: - FFmpeg Installation
+
+    /// Whether Homebrew is available on the system
+    var homebrewAvailable: Bool {
+        FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew") ||
+        FileManager.default.fileExists(atPath: "/usr/local/bin/brew")
+    }
+
+    private var brewPath: String {
+        if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew") {
+            return "/opt/homebrew/bin/brew"
+        }
+        return "/usr/local/bin/brew"
+    }
+
+    @MainActor
+    func installFFmpeg() async {
+        ffmpegStatus = .installing(progress: String(localized: "Installing FFmpeg via Homebrew..."))
+        appendLog(String(localized: "Installing FFmpeg via Homebrew..."))
+
+        do {
+            try await runProcessWithLiveOutput(
+                executablePath: brewPath,
+                arguments: ["install", "ffmpeg"]
+            )
+            appendLog(String(localized: "FFmpeg installed successfully."))
+            ffmpegStatus = .installed
+        } catch {
+            let msg = error.localizedDescription
+            appendLog("\n\u{274C} FFmpeg: \(msg)")
+            ffmpegStatus = .failed(error: msg)
+        }
     }
 
     // MARK: - Deploy Scripts
