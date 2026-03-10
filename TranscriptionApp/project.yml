@@ -12,12 +12,19 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     DEVELOPMENT_LANGUAGE: en
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
 targets:
   TranscriptionApp:
     type: application
     platform: macOS
     sources:
       - TranscriptionApp
+    dependencies:
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pierre.Voxa
@@ -31,3 +38,6 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Voxa uses the microphone to record your voice during meetings."
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: false
+        INFOPLIST_KEY_SUFeedURL: "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml"
+        INFOPLIST_KEY_SUPublicEDKey: "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw="
+        INFOPLIST_KEY_SUEnableAutomaticChecks: true

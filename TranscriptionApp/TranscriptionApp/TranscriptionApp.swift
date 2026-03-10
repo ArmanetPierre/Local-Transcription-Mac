@@ -1,3 +1,4 @@
+import Sparkle
 import SwiftData
 import SwiftUI
 
@@ -9,12 +10,17 @@ struct TranscriptionApp: App {
     @State private var dependencyManager = DependencyManager()
     @AppStorage("setup_completed") private var setupCompleted = false
 
+    let updaterController: SPUStandardUpdaterController
+
     init() {
-        // Creer le ModelContainer explicitement pour le partager
-        // entre WindowGroup et MenuBarExtra (qui ne supporte pas @Environment)
+        self.updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+
         self.modelContainer = try! ModelContainer(for: TranscriptionProject.self)
 
-        // Arreter le serveur Ollama et l'enregistrement a la fermeture
         NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
             object: nil,

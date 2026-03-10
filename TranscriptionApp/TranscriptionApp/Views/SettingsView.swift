@@ -1,6 +1,17 @@
+import Sparkle
 import SwiftUI
 
 struct SettingsView: View {
+    private let updater: SPUUpdater
+
+    init() {
+        self.updater = SPUStandardUpdaterController(
+            startingUpdater: false,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        ).updater
+    }
+
     @AppStorage("hf_token") private var hfToken = ""
     @AppStorage("default_model") private var defaultModel = WhisperModel.largeV3Turbo.rawValue
     @AppStorage("python_path") private var pythonPath = PythonBridge.defaultPythonPath
@@ -76,6 +87,17 @@ struct SettingsView: View {
                 Text("Run 'ollama serve' to enable automatic summaries")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("Updates") {
+                Toggle("Automatically check for updates", isOn: Binding(
+                    get: { updater.automaticallyChecksForUpdates },
+                    set: { updater.automaticallyChecksForUpdates = $0 }
+                ))
+
+                Button("Check for Updates...") {
+                    updater.checkForUpdates()
+                }
             }
 
             Section("Setup") {
