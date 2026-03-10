@@ -443,15 +443,20 @@
 				CODE_SIGN_ENTITLEMENTS = TranscriptionApp/Resources/TranscriptionApp.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.Voxa;
 				PRODUCT_NAME = Voxa;
 				SDKROOT = macosx;
@@ -466,15 +471,20 @@
 				CODE_SIGN_ENTITLEMENTS = TranscriptionApp/Resources/TranscriptionApp.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.Voxa;
 				PRODUCT_NAME = Voxa;
 				SDKROOT = macosx;

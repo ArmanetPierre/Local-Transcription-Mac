@@ -5,5 +5,17 @@
     <link>https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml</link>
     <description>Voxa Updates</description>
     <language>en</language>
+    <item>
+      <title>Voxa 1.1.0</title>
+      <pubDate>Tue, 10 Mar 2026 14:54:36 +0000</pubDate>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <enclosure url="https://github.com/ArmanetPierre/Local-Transcription-Mac/releases/download/v1.1.0/Voxa.zip"
+                 sparkle:version="1"
+                 sparkle:shortVersionString="1.1.0"
+                 length="1836305"
+                 type="application/octet-stream"
+                 sparkle:edSignature="23emJUUu3EkZ7t38FPT4mpNq2/dYKWDcQuyTSTYeqSYE7ETkGpUK+CRctsynZIHSaDyjMx8MmZ/CEpygf58oAg=="/>
+    </item>
   </channel>
 </rss>

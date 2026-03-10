@@ -40,4 +40,6 @@ targets:
         CODE_SIGNING_REQUIRED: false
         INFOPLIST_KEY_SUFeedURL: "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw="
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_SUEnableAutomaticChecks: true
