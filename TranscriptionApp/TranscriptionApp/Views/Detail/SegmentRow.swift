@@ -41,6 +41,23 @@ struct SegmentRow: View {
                             onRenameSpeaker(renameText)
                             showRenamePopover = false
                         }
+
+                    // Suggestions depuis l'historique
+                    let suggestions = SpeakerNameHistory.suggestions(for: renameText)
+                    if !suggestions.isEmpty {
+                        HStack(spacing: 4) {
+                            ForEach(suggestions.prefix(4), id: \.self) { name in
+                                Button(name) {
+                                    renameText = name
+                                    onRenameSpeaker(name)
+                                    showRenamePopover = false
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                    }
+
                     HStack {
                         Button("Cancel") { showRenamePopover = false }
                         Button("OK") {
@@ -57,7 +74,7 @@ struct SegmentRow: View {
             TextField("", text: $segment.text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(isPlaying ? .body.bold() : .body)
-                .lineLimit(1...10)
+                .lineLimit(1...50)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())

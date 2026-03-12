@@ -112,6 +112,67 @@ def get_audio_duration(audio_path):
         return 0.0
 
 
+# === Speaker Embedding Matching ===
+
+
+def load_embeddings_file(filepath):
+    """Charger les embeddings sauvegardes depuis un fichier JSON."""
+    try:
+        if filepath and os.path.isfile(filepath):
+            with open(filepath, "r") as f:
+                data = json.load(f)
+                log(f"Embeddings charges: {len(data)} speakers depuis {filepath}")
+                return data
+    except Exception as e:
+        log(f"Impossible de charger les embeddings: {e}", level="debug")
+    return {}
+
+
+def cosine_similarity(a, b):
+    """Calcul de la similarite cosinus entre deux vecteurs."""
+    a = np.array(a, dtype=np.float32)
+    b = np.array(b, dtype=np.float32)
+    dot = float(np.dot(a, b))
+    norm_a = float(np.linalg.norm(a))
+    norm_b = float(np.linalg.norm(b))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def match_speakers_with_saved(new_embeddings, saved_embeddings, threshold=0.65):
+    """Matcher les nouveaux speakers avec les sauvegardes via similarite cosinus.
+
+    Utilise un matching glouton (meilleur score d'abord) pour eviter les doublons.
+    Retourne: {new_speaker_label: matched_name}
+    """
+    if not new_embeddings or not saved_embeddings:
+        return {}
+
+    # Calculer toutes les similarites
+    scores = []
+    for new_label, new_emb in new_embeddings.items():
+        for saved_name, saved_emb in saved_embeddings.items():
+            sim = cosine_similarity(new_emb, saved_emb)
+            if sim >= threshold:
+                scores.append((sim, new_label, saved_name))
+
+    # Trier par similarite decroissante et attribuer de maniere gloutonne
+    scores.sort(reverse=True)
+    matches = {}
+    used_names = set()
+    used_labels = set()
+
+    for sim, new_label, saved_name in scores:
+        if new_label not in used_labels and saved_name not in used_names:
+            matches[new_label] = saved_name
+            used_labels.add(new_label)
+            used_names.add(saved_name)
+            log(f"Speaker match: {new_label} -> {saved_name} (similarite: {sim:.3f})")
+
+    return matches
+
+
 def assign_speakers_to_segments(segments, diarization):
     """Attribue un speaker a chaque segment de transcription base sur la diarisation."""
     for seg in segments:
@@ -155,6 +216,8 @@ def main():
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--hf-token", default=None)
     parser.add_argument("--no-diarize", action="store_true")
+    parser.add_argument("--embeddings-file", default=None,
+                        help="Fichier JSON des embeddings speakers sauvegardes")
     parser.add_argument("--json-protocol", action="store_true",
                         help="Sortie JSON Lines pour integration GUI")
     args = parser.parse_args()
@@ -331,6 +394,22 @@ def main():
             else:
                 diarization = diarize_output
 
+            # Recuperer les centroids depuis DiarizeOutput (pyannote 4.x)
+            # DiarizeOutput.speaker_embeddings = array (num_speakers, dimension)
+            # trie dans l'ordre de diarization.labels()
+            raw_embeddings = getattr(diarize_output, "speaker_embeddings", None)
+            embedding_labels = None
+            if raw_embeddings is not None:
+                embedding_labels = list(diarization.labels())
+                log(f"Centroids recuperes: shape={raw_embeddings.shape}, labels={embedding_labels}")
+            else:
+                # Fallback pyannote 3.x
+                raw_embeddings = getattr(pipeline, "embeddings_", None)
+                if raw_embeddings is not None:
+                    log(f"Centroids (fallback 3.x): shape={raw_embeddings.shape}")
+                else:
+                    log("Pas de centroids disponibles", level="debug")
+
             t3 = time.time()
 
             # Attribution des speakers
@@ -343,6 +422,34 @@ def main():
 
             segments = assign_speakers_to_segments(segments, diarization)
             speakers = sorted(set(seg.get("speaker", "Inconnu") for seg in segments))
+
+            # Construire le dictionnaire d'embeddings par speaker
+            speaker_embeddings = {}
+            if raw_embeddings is not None:
+                try:
+                    emb_array = np.array(raw_embeddings)
+                    # Utiliser embedding_labels (ordre DiarizeOutput) si disponible,
+                    # sinon speakers (ordre alphabetique)
+                    labels = embedding_labels if embedding_labels else speakers
+                    for i, speaker in enumerate(labels):
+                        if i < len(emb_array):
+                            speaker_embeddings[speaker] = emb_array[i].tolist()
+                    log(f"Embeddings: {len(speaker_embeddings)} speakers, dim={emb_array.shape[-1] if emb_array.ndim > 1 else '?'}")
+                except Exception as e:
+                    log(f"Erreur extraction embeddings: {e}", level="debug")
+
+            # Comparer avec les embeddings sauvegardes
+            speaker_matches = {}
+            if speaker_embeddings and args.embeddings_file:
+                saved = load_embeddings_file(args.embeddings_file)
+                if saved:
+                    speaker_matches = match_speakers_with_saved(
+                        speaker_embeddings, saved, threshold=0.65
+                    )
+                    if speaker_matches:
+                        log(f"Matching automatique: {speaker_matches}")
+                    else:
+                        log("Aucun match trouve avec les speakers connus")
 
             if JSON_PROTOCOL:
                 emit({
@@ -370,12 +477,21 @@ def main():
                     "no_speech_prob": seg.get("no_speech_prob"),
                 })
 
-            emit({
+            result_msg = {
                 "type": "result",
                 "segments": output_segments,
                 "language": detected_language,
                 "total_duration_sec": round(total_time, 1),
-            })
+            }
+
+            # Inclure les embeddings et matchs si disponibles
+            if not args.no_diarize:
+                if speaker_embeddings:
+                    result_msg["speaker_embeddings"] = speaker_embeddings
+                if speaker_matches:
+                    result_msg["speaker_matches"] = speaker_matches
+
+            emit(result_msg)
         else:
             # Mode CLI classique : ecrire le fichier de sortie
             from transcribe import OUTPUT_FORMATS

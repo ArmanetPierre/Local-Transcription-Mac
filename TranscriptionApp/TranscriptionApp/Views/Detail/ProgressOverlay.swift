@@ -15,8 +15,13 @@ struct ProgressOverlay: View {
                 .foregroundStyle(.blue)
                 .symbolEffect(.pulse, isActive: project.status.isProcessing)
 
-            Text(project.status.label)
-                .font(.title2.bold())
+            if project.status == .generatingSummary {
+                Text(project.status.label)
+                    .font(.title2.bold())
+            } else {
+                Text(String(localized: "Processing..."))
+                    .font(.title2.bold())
+            }
 
             if project.status == .generatingSummary {
                 if let ollama = ollamaService, ollama.isPulling {
@@ -56,6 +61,10 @@ struct ProgressOverlay: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
+
+                Text(project.status.label)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
 
             if project.status == .pending {

@@ -79,6 +79,7 @@ final class PythonBridge {
                     "--model", model.rawValue,
                     "--json-protocol",
                     "--hf-token", hfToken,
+                    "--embeddings-file", SpeakerEmbeddingStore.embeddingsFilePath,
                 ]
                 if let lang = language {
                     arguments += ["--language", lang]
@@ -101,6 +102,9 @@ final class PythonBridge {
                 var env = ProcessInfo.processInfo.environment
                 env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
                 env["PYTHONUNBUFFERED"] = "1"
+                // Desactiver la validation Metal (activee par Xcode en Debug)
+                // pour eviter les SIGABRT sur certains shaders pyannote/MPS
+                env["METAL_DEVICE_WRAPPER_TYPE"] = "0"
                 // Add Voxa bin directory and common paths so ffmpeg is discoverable
                 let voxaBin = FileManager.default.urls(
                     for: .applicationSupportDirectory, in: .userDomainMask

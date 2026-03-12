@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A5BFC0F17E1B505F8B2C575 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
+		0B7C47002B4458F30E439F1D /* SpeakerNameHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */; };
 		0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */ = {isa = PBXBuildFile; fileRef = 170DCEDA15AD1CCF6C976075 /* transcribe.py */; };
 		10B45E16BE9C94DA4B894D48 /* SpeakerColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */; };
 		12C4652E1A8DEFF17FDA89FB /* Segment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9418716D2C8471290966B9 /* Segment.swift */; };
@@ -35,6 +36,7 @@
 		9D412DA9327F05F9669DD177 /* ImportDropZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6642498EF0865E2C14763BB7 /* ImportDropZone.swift */; };
 		AFBF379200D40DF742370FAF /* TranscriptionListVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */; };
 		BCFA801A03ED616AAB6AC770 /* RecordingVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3311BBB67E780B3E7E6F5CF /* RecordingVM.swift */; };
+		C2647510E97B51A5E67A7268 /* SpeakerEmbeddingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */; };
 		C3E677302429CA54403C315E /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4DAE9F2493EC17B7EE102A /* ExportService.swift */; };
 		C41B34FEBDEE501329959424 /* TranscriptionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */; };
 		C5E727B8017DF924131E27F2 /* RecordingMenuBarSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7324CF500A9366C2D747405 /* RecordingMenuBarSection.swift */; };
@@ -54,6 +56,7 @@
 /* Begin PBXFileReference section */
 		07FB6E5DA301471CD4021785 /* SpeakerSynthesisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerSynthesisView.swift; sourceTree = "<group>"; };
 		094C312805FEE4686429D8DA /* AudioPlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerBar.swift; sourceTree = "<group>"; };
+		0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerNameHistory.swift; sourceTree = "<group>"; };
 		1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		170DCEDA15AD1CCF6C976075 /* transcribe.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = transcribe.py; sourceTree = "<group>"; };
 		29DFDC3498EA86E95847A062 /* SpeakerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerSetupView.swift; sourceTree = "<group>"; };
@@ -61,6 +64,7 @@
 		3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionRow.swift; sourceTree = "<group>"; };
 		42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSheet.swift; sourceTree = "<group>"; };
+		5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerEmbeddingStore.swift; sourceTree = "<group>"; };
 		59B1CA4B4049A73379AF6AC0 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		66178D29E0227C619444F7B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6642498EF0865E2C14763BB7 /* ImportDropZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportDropZone.swift; sourceTree = "<group>"; };
@@ -164,6 +168,8 @@
 			children = (
 				8B8D07174F75A25BC11B62ED /* EstimationService.swift */,
 				907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */,
+				5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */,
+				0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */,
 				E2BCBA095CF1CD3704DBA604 /* TimeFormatting.swift */,
 			);
 			path = Utilities;
@@ -356,6 +362,8 @@
 				EA386D7E91E7E93D153A5CAD /* SidebarView.swift in Sources */,
 				337E6B8D682D07A885F02CE3 /* SpeakerBadge.swift in Sources */,
 				10B45E16BE9C94DA4B894D48 /* SpeakerColors.swift in Sources */,
+				C2647510E97B51A5E67A7268 /* SpeakerEmbeddingStore.swift in Sources */,
+				0B7C47002B4458F30E439F1D /* SpeakerNameHistory.swift in Sources */,
 				9CA1E76904330E3940312631 /* SpeakerSetupView.swift in Sources */,
 				51D6F0A2F022AFF557E6D12E /* SpeakerSynthesisView.swift in Sources */,
 				4B6326A20724A8A99898B065 /* TimeFormatting.swift in Sources */,

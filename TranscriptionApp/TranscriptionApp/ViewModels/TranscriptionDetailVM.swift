@@ -50,6 +50,8 @@ final class TranscriptionDetailVM {
             names.removeValue(forKey: label)
         } else {
             names[label] = newName
+            // Sauvegarder le nom dans l'historique global
+            SpeakerNameHistory.addNames([newName])
         }
         project.speakerNames = names
     }

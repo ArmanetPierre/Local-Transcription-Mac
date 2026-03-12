@@ -160,7 +160,6 @@ final class TranscriptionListVM {
                 case .stepStart(let msg):
                     print("[ListVM] ← stepStart: \(msg.step)")
                     project.currentStep = msg.step
-                    project.progressPercent = 0 // Reset par etape
                     switch msg.step {
                     case "transcription": project.status = .transcribing
                     case "diarization": project.status = .diarizing
@@ -169,13 +168,12 @@ final class TranscriptionListVM {
                     }
 
                 case .progress(let msg):
-                    // Pourcentage en 0-100 pour l'affichage
+                    // Pourcentage par etape en 0-1
                     let percentValue = msg.percent > 1.0 ? msg.percent : msg.percent * 100.0
-                    project.progressPercent = min(percentValue, 100.0)
-
-                    // Progression globale (0-1) pour l'estimation du temps total
-                    // Poids : transcription ~70%, diarisation ~25%, attribution ~5%
                     let stepProgress = min(percentValue / 100.0, 1.0)
+
+                    // Progression globale (0-1) ponderee sur l'ensemble du pipeline
+                    // Poids : transcription ~70%, diarisation ~25%, attribution ~5%
                     let globalProgress: Double
                     if project.diarizationEnabled {
                         switch project.currentStep {
@@ -191,11 +189,14 @@ final class TranscriptionListVM {
                     } else {
                         globalProgress = stepProgress
                     }
+
+                    // Utiliser la progression globale pour la barre et l'estimation
+                    project.progressPercent = min(globalProgress * 100.0, 100.0)
                     estimationService.update(progress: globalProgress)
 
                     // Log progress seulement tous les 10%
                     if Int(percentValue) % 10 == 0 {
-                        print("[ListVM] ← progress: \(msg.step) \(Int(percentValue))%")
+                        print("[ListVM] ← progress: \(msg.step) \(Int(percentValue))% (global: \(Int(globalProgress * 100))%)")
                     }
 
                 case .stepComplete(let msg):
@@ -217,6 +218,29 @@ final class TranscriptionListVM {
                     receivedResult = true
                     print("[ListVM] ← result: \(msg.segments.count) segments, langue=\(msg.language), total=\(String(format: "%.1f", msg.totalDurationSec))s")
 
+                    // Merger les segments consecutifs du meme speaker
+                    // (seulement si speaker non-nil, sinon on garde les segments separes)
+                    var mergedResults: [ResultSegment] = []
+                    for seg in msg.segments {
+                        if let last = mergedResults.last,
+                           let lastSpeaker = last.speaker, !lastSpeaker.isEmpty,
+                           let segSpeaker = seg.speaker, !segSpeaker.isEmpty,
+                           lastSpeaker == segSpeaker {
+                            mergedResults[mergedResults.count - 1] = ResultSegment(
+                                id: last.id,
+                                start: last.start,
+                                end: seg.end,
+                                text: last.text + " " + seg.text,
+                                speaker: last.speaker,
+                                avgLogprob: nil,
+                                noSpeechProb: nil
+                            )
+                        } else {
+                            mergedResults.append(seg)
+                        }
+                    }
+                    print("[ListVM]   \(msg.segments.count) segments → \(mergedResults.count) apres fusion")
+
                     // Supprimer les anciens segments
                     let oldCount = project.segments.count
                     for seg in project.segments {
@@ -227,8 +251,8 @@ final class TranscriptionListVM {
                         print("[ListVM]   \(oldCount) anciens segments supprimes")
                     }
 
-                    // Creer les nouveaux segments
-                    for resultSeg in msg.segments {
+                    // Creer les nouveaux segments (merges)
+                    for resultSeg in mergedResults {
                         let segment = Segment.create(from: resultSeg, project: project)
                         modelContext.insert(segment)
                         project.segments.append(segment)
@@ -238,6 +262,26 @@ final class TranscriptionListVM {
                     project.language = msg.language
                     project.totalProcessingDurationSec = msg.totalDurationSec
                     project.completedAt = Date()
+
+                    // Stocker les embeddings vocaux pour le matching automatique
+                    if let embeddings = msg.speakerEmbeddings, !embeddings.isEmpty {
+                        let matches = msg.speakerMatches ?? [:]
+                        SpeakerEmbeddingStore.shared.setPending(
+                            projectId: project.id,
+                            embeddings: embeddings,
+                            matches: matches
+                        )
+
+                        // Pre-remplir les noms matches sur le projet
+                        if !matches.isEmpty {
+                            var names = project.speakerNames
+                            for (label, name) in matches {
+                                names[label] = name
+                            }
+                            project.speakerNames = names
+                            print("[ListVM]   Noms auto-matches: \(matches)")
+                        }
+                    }
 
                     // Si diarisation active et plusieurs speakers → ecran identification
                     if project.diarizationEnabled && project.uniqueSpeakers.count > 1 {

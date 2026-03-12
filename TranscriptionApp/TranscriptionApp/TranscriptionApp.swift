@@ -19,7 +19,23 @@ struct TranscriptionApp: App {
             userDriverDelegate: nil
         )
 
-        self.modelContainer = try! ModelContainer(for: TranscriptionProject.self)
+        // Stocker la base SwiftData dans le dossier Voxa (Application Support)
+        // plutot que le defaut ~/Library/Application Support/default.store
+        let appSupport = FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask
+        ).first!
+        let storeURL = appSupport
+            .appendingPathComponent("Voxa", isDirectory: true)
+            .appendingPathComponent("Voxa.store")
+        try? FileManager.default.createDirectory(
+            at: storeURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let config = ModelConfiguration(url: storeURL)
+        self.modelContainer = try! ModelContainer(
+            for: TranscriptionProject.self,
+            configurations: config
+        )
 
         NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,

@@ -103,16 +103,30 @@ struct ResultSegment: Codable {
         case avgLogprob = "avg_logprob"
         case noSpeechProb = "no_speech_prob"
     }
+
+    init(id: Int, start: Double, end: Double, text: String, speaker: String?, avgLogprob: Double?, noSpeechProb: Double?) {
+        self.id = id
+        self.start = start
+        self.end = end
+        self.text = text
+        self.speaker = speaker
+        self.avgLogprob = avgLogprob
+        self.noSpeechProb = noSpeechProb
+    }
 }
 
 struct ResultMessage: Decodable {
     let segments: [ResultSegment]
     let language: String
     let totalDurationSec: Double
+    let speakerEmbeddings: [String: [Double]]?
+    let speakerMatches: [String: String]?
 
     enum CodingKeys: String, CodingKey {
         case segments, language
         case totalDurationSec = "total_duration_sec"
+        case speakerEmbeddings = "speaker_embeddings"
+        case speakerMatches = "speaker_matches"
     }
 }
 

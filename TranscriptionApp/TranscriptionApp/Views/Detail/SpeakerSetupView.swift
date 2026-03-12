@@ -4,6 +4,7 @@ struct SpeakerSetupView: View {
     @Bindable var project: TranscriptionProject
     var viewModel: TranscriptionDetailVM
     @State private var editedNames: [String: String] = [:]
+    @State private var focusedSpeaker: String?
 
     var body: some View {
         ScrollView {
@@ -31,6 +32,7 @@ struct SpeakerSetupView: View {
                 // Actions
                 HStack {
                     Button("Skip") {
+                        SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
                         viewModel.skipSpeakerNames(project: project)
                     }
                     .buttonStyle(.bordered)
@@ -42,6 +44,15 @@ struct SpeakerSetupView: View {
                         for (label, name) in editedNames {
                             viewModel.renameSpeaker(in: project, label: label, newName: name)
                         }
+                        // Sauvegarder les noms dans l'historique global (suggestions texte)
+                        SpeakerNameHistory.addNames(Array(editedNames.values))
+
+                        // Sauvegarder les embeddings vocaux avec les noms confirmes
+                        SpeakerEmbeddingStore.shared.confirmSpeakerNames(
+                            projectId: project.id,
+                            labelToName: editedNames
+                        )
+
                         viewModel.confirmSpeakerNames(project: project)
                     }
                     .buttonStyle(.borderedProminent)
@@ -54,6 +65,7 @@ struct SpeakerSetupView: View {
         .onAppear {
             print("[SpeakerSetup] onAppear: \(project.uniqueSpeakers.count) speakers, segments=\(project.segments.count)")
             // Initialiser les noms edites avec les noms existants
+            // (inclut les noms pre-remplis par le matching d'embeddings vocaux)
             for speaker in project.uniqueSpeakers {
                 editedNames[speaker] = project.speakerNames[speaker] ?? ""
             }
@@ -113,13 +125,38 @@ struct SpeakerSetupView: View {
                 }
             }
 
-            // Champ nom
-            HStack {
-                Text("Name:")
-                    .font(.callout)
-                TextField("Enter name...", text: nameBinding(for: speakerLabel))
+            // Champ nom avec suggestions
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Name:")
+                        .font(.callout)
+                    TextField("Enter name...", text: nameBinding(for: speakerLabel), onEditingChanged: { editing in
+                        focusedSpeaker = editing ? speakerLabel : nil
+                    })
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 250)
+                }
+
+                // Suggestions basees sur l'historique
+                let query = editedNames[speakerLabel] ?? ""
+                let suggestions = SpeakerNameHistory.suggestions(for: query)
+                    .filter { name in
+                        // Exclure les noms deja attribues a d'autres speakers
+                        !editedNames.contains { $0.key != speakerLabel && $0.value == name }
+                    }
+                if focusedSpeaker == speakerLabel && !suggestions.isEmpty && query != suggestions.first {
+                    HStack(spacing: 6) {
+                        ForEach(suggestions.prefix(5), id: \.self) { name in
+                            Button(name) {
+                                editedNames[speakerLabel] = name
+                                focusedSpeaker = nil
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    }
+                    .padding(.leading, 48)
+                }
             }
             .padding(.top, 4)
         }
