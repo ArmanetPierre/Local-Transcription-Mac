@@ -78,10 +78,14 @@ final class DependencyManager {
         let customPython = UserDefaults.standard.string(forKey: "python_path")
         let customScript = UserDefaults.standard.string(forKey: "script_path")
 
-        if let customPython, let customScript,
-           FileManager.default.fileExists(atPath: customPython),
-           FileManager.default.fileExists(atPath: customScript) {
-            // Existing user with valid custom paths — mark as ready
+        // Always re-deploy scripts from bundle so updates are picked up
+        try? deployScripts()
+        // Always point to managed script so app updates take effect
+        UserDefaults.standard.set(Self.scriptPath, forKey: "script_path")
+
+        if let customPython,
+           FileManager.default.fileExists(atPath: customPython) {
+            // Existing user with valid custom Python — mark as ready
             pythonStatus = .installed
             venvStatus = .installed
             discoveredPythonPath = customPython
