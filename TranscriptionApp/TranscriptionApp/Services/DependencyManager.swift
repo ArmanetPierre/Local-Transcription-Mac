@@ -76,7 +76,6 @@ final class DependencyManager {
     func checkAll() async {
         // Check if user has custom paths that work (migration for existing users)
         let customPython = UserDefaults.standard.string(forKey: "python_path")
-        let customScript = UserDefaults.standard.string(forKey: "script_path")
 
         // Always re-deploy scripts from bundle so updates are picked up
         try? deployScripts()
