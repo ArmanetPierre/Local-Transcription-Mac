@@ -44,7 +44,7 @@ struct ImportDropZone: View {
                 guard let data = data as? Data,
                       let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
 
-                let audioExtensions = ["m4a", "mp3", "wav", "aac", "flac", "ogg", "wma", "aiff", "mp4"]
+                let audioExtensions = ["m4a", "mp3", "wav", "aac", "flac", "ogg", "wma", "aiff", "mp4", "mov", "m4v"]
                 if audioExtensions.contains(url.pathExtension.lowercased()) {
                     urls.append(url)
                 }

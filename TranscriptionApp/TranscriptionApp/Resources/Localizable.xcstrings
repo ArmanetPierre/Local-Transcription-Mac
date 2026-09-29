@@ -1668,6 +1668,66 @@
           }
         }
       }
+    },
+    "Claude Code (MCP)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code (MCP)"
+          }
+        }
+      }
+    },
+    "Let Claude Code transcribe your meetings, read transcripts and write meeting reports in Voxa. Run this command once in a terminal:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet à Claude Code de transcrire vos réunions, lire les transcriptions et rédiger les comptes rendus dans Voxa. Lancez cette commande une fois dans un terminal :"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
+          }
+        }
+      }
+    },
+    "Copied" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
+          }
+        }
+      }
+    },
+    "Voxa must be running for Claude to use it (it is opened automatically if needed)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voxa doit être lancé pour que Claude l'utilise (il est ouvert automatiquement si besoin)."
+          }
+        }
+      }
+    },
+    "Could not extract the audio track from %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'extraire la piste audio de %@."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

@@ -153,6 +153,9 @@ def match_speakers_with_saved(new_embeddings, saved_embeddings, threshold=0.65):
     scores = []
     for new_label, new_emb in new_embeddings.items():
         for saved_name, saved_emb in saved_embeddings.items():
+            # Ignorer les embeddings d'un autre modele (dimension differente)
+            if len(saved_emb) != len(new_emb):
+                continue
             sim = cosine_similarity(new_emb, saved_emb)
             if sim >= threshold:
                 scores.append((sim, new_label, saved_name))

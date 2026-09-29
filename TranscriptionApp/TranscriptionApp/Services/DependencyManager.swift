@@ -316,7 +316,7 @@ final class DependencyManager {
         let fm = FileManager.default
         try fm.createDirectory(at: Self.scriptsDirectory, withIntermediateDirectories: true)
 
-        let scriptsToCopy = ["transcribe_bridge.py", "transcribe.py", "requirements.txt"]
+        let scriptsToCopy = ["transcribe_bridge.py", "transcribe.py", "voxa_mcp.py", "requirements.txt"]
 
         for scriptName in scriptsToCopy {
             guard let bundledURL = Bundle.main.url(forResource: scriptName, withExtension: nil)

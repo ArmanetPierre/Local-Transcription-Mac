@@ -23,6 +23,12 @@ struct SettingsView: View {
     @State private var ollamaStatus: OllamaStatus = .unknown
     @State private var isReinstallingPackages = false
     @State private var reinstallLog = ""
+    @State private var mcpCommandCopied = false
+
+    private var claudeMCPCommand: String {
+        let python = FileManager.default.fileExists(atPath: pythonPath) ? pythonPath : "python3"
+        return "claude mcp add voxa --scope user -- \"\(python)\" \"\(LocalAPIServer.mcpScriptPath)\""
+    }
 
     var body: some View {
         Form {
@@ -85,6 +91,29 @@ struct SettingsView: View {
                 .font(.caption)
 
                 Text("Run 'ollama serve' to enable automatic summaries")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Claude Code (MCP)") {
+                Text("Let Claude Code transcribe your meetings, read transcripts and write meeting reports in Voxa. Run this command once in a terminal:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(alignment: .top) {
+                    Text(claudeMCPCommand)
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(mcpCommandCopied ? "Copied" : "Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(claudeMCPCommand, forType: .string)
+                        mcpCommandCopied = true
+                    }
+                    .controlSize(.small)
+                }
+
+                Text("Voxa must be running for Claude to use it (it is opened automatically if needed).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

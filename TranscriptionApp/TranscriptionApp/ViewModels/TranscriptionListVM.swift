@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import SwiftData
 import UniformTypeIdentifiers
@@ -27,7 +28,16 @@ final class TranscriptionListVM {
         .aiff,
         UTType("public.m4a") ?? .audio,
         UTType("com.apple.m4a-audio") ?? .audio,
+        .movie,
+        .mpeg4Movie,
+        .quickTimeMovie,
     ]
+
+    /// Vrai si le fichier est une video (on n'en garde que la piste audio)
+    static func isVideo(_ url: URL) -> Bool {
+        guard let type = UTType(filenameExtension: url.pathExtension.lowercased()) else { return false }
+        return type.conforms(to: .movie)
+    }
 
     /// Repertoire persistant pour stocker les fichiers audio importes
     private static var audioStorageDirectory: URL {
@@ -63,25 +73,77 @@ final class TranscriptionListVM {
         }
     }
 
+    /// Extrait la piste audio d'une video en .m4a dans le stockage de l'app.
+    /// Evite de copier des videos de plusieurs Go juste pour en lire le son.
+    private func extractAudioToStorage(_ sourceURL: URL) async throws -> URL {
+        let accessing = sourceURL.startAccessingSecurityScopedResource()
+        defer {
+            if accessing { sourceURL.stopAccessingSecurityScopedResource() }
+        }
+
+        let baseName = sourceURL.deletingPathExtension().lastPathComponent
+        let destURL = Self.audioStorageDirectory
+            .appendingPathComponent("\(UUID().uuidString)_\(baseName).m4a")
+
+        let asset = AVURLAsset(url: sourceURL)
+        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) else {
+            throw ImportError.audioExtractionFailed(sourceURL.lastPathComponent)
+        }
+        session.outputURL = destURL
+        session.outputFileType = .m4a
+        await session.export()
+        guard session.status == .completed else {
+            throw session.error ?? ImportError.audioExtractionFailed(sourceURL.lastPathComponent)
+        }
+        print("[ListVM] Audio extrait de la video vers: \(destURL.path)")
+        return destURL
+    }
+
+    enum ImportError: LocalizedError {
+        case audioExtractionFailed(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .audioExtractionFailed(let name):
+                String(localized: "Could not extract the audio track from \(name).")
+            }
+        }
+    }
+
     func importFiles(_ urls: [URL], modelContext: ModelContext) {
         let newURLs = urls.filter { url in
             !batchQueue.contains(url)
         }
 
         print("[ListVM] Import de \(newURLs.count) fichier(s), queue totale: \(batchQueue.count + newURLs.count)")
-        for url in newURLs {
-            print("[ListVM]   → \(url.lastPathComponent)")
-            // Copier le fichier vers le stockage persistant (les URLs temporaires
-            // du drag & drop ou fileImporter sont nettoyees apres l'import)
-            let storedURL = copyAudioToStorage(url)
-            batchQueue.append(storedURL)
-            let project = TranscriptionProject.create(audioURL: storedURL)
-            modelContext.insert(project)
+        Task { @MainActor in
+            for url in newURLs {
+                _ = try? await enqueue(url, language: nil, modelContext: modelContext)
+            }
         }
+    }
 
-        if !bridge.isRunning {
+    /// Importe un fichier (audio ou video) et l'ajoute a la file de transcription.
+    /// Utilise par l'UI et par l'API locale (MCP).
+    @MainActor
+    @discardableResult
+    func enqueue(_ url: URL, language: String?, modelContext: ModelContext) async throws -> TranscriptionProject {
+        print("[ListVM]   → \(url.lastPathComponent)")
+        // Copier le fichier vers le stockage persistant (les URLs temporaires
+        // du drag & drop ou fileImporter sont nettoyees apres l'import)
+        let storedURL = Self.isVideo(url)
+            ? try await extractAudioToStorage(url)
+            : copyAudioToStorage(url)
+        let project = TranscriptionProject.create(audioURL: storedURL)
+        project.title = url.deletingPathExtension().lastPathComponent
+        project.language = language
+        modelContext.insert(project)
+        batchQueue.append(storedURL)
+
+        if !bridge.isRunning && currentProject == nil {
             processNext(modelContext: modelContext)
         }
+        return project
     }
 
     // MARK: - Processing

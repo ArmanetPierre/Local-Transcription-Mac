@@ -5,12 +5,14 @@ import SwiftUI
 @main
 struct TranscriptionApp: App {
     let modelContainer: ModelContainer
-    @State private var listVM = TranscriptionListVM()
+    @State private var listVM: TranscriptionListVM
     @State private var recordingVM = RecordingVM()
     @State private var dependencyManager = DependencyManager()
     @AppStorage("setup_completed") private var setupCompleted = false
 
     let updaterController: SPUStandardUpdaterController
+    /// API locale pour le serveur MCP (Claude Code)
+    let apiServer: LocalAPIServer
 
     init() {
         self.updaterController = SPUStandardUpdaterController(
@@ -36,6 +38,11 @@ struct TranscriptionApp: App {
             for: TranscriptionProject.self,
             configurations: config
         )
+
+        let listVM = TranscriptionListVM()
+        self._listVM = State(initialValue: listVM)
+        self.apiServer = LocalAPIServer(listVM: listVM, modelContainer: modelContainer)
+        apiServer.start()
 
         NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
