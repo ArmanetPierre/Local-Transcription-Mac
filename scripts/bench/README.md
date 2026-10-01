@@ -101,7 +101,7 @@ Résultat (octobre 2026, M3 Pro, même modèle large-v3-turbo) :
 | Premier lancement | rapide | plusieurs minutes (préparation Core ML, une fois par emplacement du modèle) |
 | Mots gardés | 93,8 % | 91,6 % (saute des passages où deux personnes parlent en même temps) |
 | Ponctuation (pour 100 mots) | 9,9 | 8,3 |
-| Nombre d'intervenants | 22/22 | 21/22 justes, mais en compte un de trop sur 2 appels sur 6 |
+| Nombre d'intervenants juste | 5 extraits sur 6 (en oublie un sur Parc Sophia) | 4 extraits sur 6 (en compte un de trop sur 2 appels) |
 | Reconnaissance des voix | mesurée | non mesurable via la CLI (empreintes non exposées) |
 
 `VOXA_WHISPERKIT_CHUNKING=none` (sans découpage par détection de voix) donne de moins bons résultats.
