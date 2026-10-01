@@ -110,6 +110,24 @@ final class SpuriousSpeakerTests: XCTestCase {
         XCTAssertTrue(PostProcessing.spuriousSpeakers(turns, audioDuration: 60).isEmpty)
     }
 
+    func testShortSpeakerUnlikeEveryoneIsArtifact() {
+        // 9 s en fin d'appel, empreinte sans ressemblance avec les 3 vraies voix
+        let turns = [SpeakerTurn(start: 0, end: 175, speaker: "A"), SpeakerTurn(start: 175, end: 283, speaker: "B"),
+                     SpeakerTurn(start: 283, end: 299, speaker: "C"), SpeakerTurn(start: 319, end: 328, speaker: "D")]
+        let embeddings: [String: [Double]] = ["A": [1, 0.3, 0.2, 0], "B": [0.3, 1, 0.25, 0], "C": [0.25, 0.3, 1, 0],
+                                              "D": [0, 0, 0, 1]]
+        XCTAssertEqual(PostProcessing.spuriousSpeakers(turns, audioDuration: 330, embeddings: embeddings), ["D"])
+        // ... sauf si c'est une voix connue
+        XCTAssertTrue(PostProcessing.spuriousSpeakers(turns, audioDuration: 330, embeddings: embeddings, keep: ["D"]).isEmpty)
+    }
+
+    func testShortRealSpeakerIsKept() {
+        // Hugo : 16 s, ressemblance normale (0,3) avec les autres
+        let turns = [SpeakerTurn(start: 0, end: 175, speaker: "A"), SpeakerTurn(start: 175, end: 191, speaker: "H")]
+        let embeddings: [String: [Double]] = ["A": [1, 0.3], "H": [0.3, 1]]
+        XCTAssertTrue(PostProcessing.spuriousSpeakers(turns, audioDuration: 330, embeddings: embeddings).isEmpty)
+    }
+
     func testSingleSpeakerNeverRemoved() {
         XCTAssertTrue(PostProcessing.spuriousSpeakers([SpeakerTurn(start: 0, end: 2, speaker: "A")], audioDuration: 600).isEmpty)
     }

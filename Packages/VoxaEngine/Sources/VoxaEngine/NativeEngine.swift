@@ -183,16 +183,20 @@ public final class NativeEngine {
             for (id, centroid) in diarization.speakerCentroidEmbeddings {
                 embeddings[Self.label(id)] = centroid.map(Double.init)
             }
-            // Intervenants parasites (quelques secondes) : leurs mots reviennent aux voisins
-            let spurious = PostProcessing.spuriousSpeakers(turns, audioDuration: duration)
+            let gallery = VoiceMatcher.loadGallery(at: options.embeddingsFile)
+            if !gallery.isEmpty, !embeddings.isEmpty {
+                (matches, matchScores) = VoiceMatcher.match(embeddings, gallery: gallery, threshold: options.recognitionThreshold)
+            }
+            // Intervenants parasites : leurs mots reviennent aux voisins
+            let spurious = PostProcessing.spuriousSpeakers(
+                turns, audioDuration: duration, embeddings: embeddings, keep: Set(matches.keys)
+            )
             if !spurious.isEmpty {
                 emit(.log(level: "info", message: "Intervenants parasites retires: \(spurious.sorted())"))
                 turns.removeAll { spurious.contains($0.speaker) }
                 for label in spurious { embeddings.removeValue(forKey: label) }
             }
-            let gallery = VoiceMatcher.loadGallery(at: options.embeddingsFile)
-            if !gallery.isEmpty, !embeddings.isEmpty {
-                (matches, matchScores) = VoiceMatcher.match(embeddings, gallery: gallery, threshold: options.recognitionThreshold)
+            if !matches.isEmpty {
                 for (label, name) in matches {
                     emit(.log(level: "info", message: "Speaker match: \(label) -> \(name) (similarite: \(matchScores[label] ?? 0))"))
                 }

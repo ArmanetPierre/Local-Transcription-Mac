@@ -105,14 +105,34 @@ public enum PostProcessing {
     static let spuriousMaxSeconds = 8.0
     static let spuriousMaxShare = 0.03
 
-    /// Intervenants a retirer : tres peu de temps de parole, alors que d'autres parlent.
-    public static func spuriousSpeakers(_ turns: [SpeakerTurn], audioDuration: Double) -> Set<String> {
+    /// Un "intervenant" un peu plus long mais dont l'empreinte ne ressemble a aucun
+    /// autre est un artefact : dans un meme enregistrement, de vraies voix differentes
+    /// gardent une similarite de 0,2 a 0,35 (meme micro, meme piece).
+    static let artifactMaxSeconds = 20.0
+    static let artifactMaxSimilarity = 0.1
+
+    /// Intervenants a retirer : tres peu de temps de parole, ou court et sans aucune
+    /// ressemblance avec les autres voix. Les voix reconnues (keep) sont gardees.
+    public static func spuriousSpeakers(
+        _ turns: [SpeakerTurn],
+        audioDuration: Double,
+        embeddings: [String: [Double]] = [:],
+        keep: Set<String> = []
+    ) -> Set<String> {
         var speaking: [String: Double] = [:]
         for turn in turns { speaking[turn.speaker, default: 0] += turn.end - turn.start }
         guard speaking.count > 1 else { return [] }
         let total = speaking.values.reduce(0, +)
         let limit = min(spuriousMaxSeconds, max(total, audioDuration) * spuriousMaxShare)
-        let spurious = Set(speaking.filter { $0.value < limit }.map(\.key))
+        var spurious = Set(speaking.filter { $0.value < limit }.map(\.key))
+        for (label, seconds) in speaking where seconds < artifactMaxSeconds {
+            guard let embedding = embeddings[label] else { continue }
+            let others = embeddings.filter { $0.key != label && speaking[$0.key] != nil }
+            guard !others.isEmpty else { continue }
+            let closest = others.values.map { VoiceMatcher.cosine(embedding, $0) }.max() ?? 1
+            if closest < artifactMaxSimilarity { spurious.insert(label) }
+        }
+        spurious.subtract(keep)
         // Ne jamais tout retirer
         return spurious.count < speaking.count ? spurious : []
     }
