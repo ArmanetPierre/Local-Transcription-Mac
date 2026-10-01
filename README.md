@@ -13,11 +13,14 @@ Native macOS application (SwiftUI) for audio transcription with speaker identifi
 - **Diarization** (speaker identification) via [pyannote.audio](https://github.com/pyannote/pyannote-audio) 3.1
 - **Meeting recording** with system audio + microphone capture (ScreenCaptureKit)
 - **Speaker summaries** and **meeting reports** via [Ollama](https://ollama.com) (local LLM)
+- **Claude Code integration (MCP)** — transcribe meetings, read transcripts and write meeting reports from Claude Code
+- **Automatic speaker recognition** — known voices are named automatically in new transcriptions
 - **Export** to TXT, JSON, SRT, Markdown
 - **Menu bar** with real-time progress tracking
 - **Built-in audio player** with segment navigation
 - **Multilingual** — adapts to your Mac's language (English / French)
-- Drag & drop audio files (m4a, wav, mp3, mp4...)
+- Drag & drop audio or video files (m4a, wav, mp3, mp4, mov...) — only the audio track of videos is kept
+- Automatic updates via [Sparkle](https://sparkle-project.org)
 
 ## Prerequisites
 
@@ -34,7 +37,9 @@ Native macOS application (SwiftUI) for audio transcription with speaker identifi
 3. Launch Voxa — the setup wizard will guide you through the rest
 4. Enter your HuggingFace token when prompted
 
-> **Note:** On first launch, macOS may warn about an unidentified developer. Right-click the app → **Open** to bypass Gatekeeper.
+Voxa is signed and notarized by Apple. Later versions are installed with **Voxa → Check for Updates…**.
+
+> **Note:** Versions up to 1.3.0 cannot update themselves (the update feed was missing from the app). Install 1.3.1 or later manually once from the DMG.
 
 The setup wizard automatically:
 - Detects your Python installation
@@ -82,6 +87,33 @@ ollama pull llama3.1:8b
 3. Click **Stop and transcribe** to end recording
 4. The recording is automatically transcribed
 
+### Claude Code (MCP)
+
+Voxa ships an [MCP](https://modelcontextprotocol.io) server so [Claude Code](https://claude.com/claude-code) can drive it. Transcription stays local; only the transcript text is sent to Claude when it reads it.
+
+**Setup** (once): copy the command from **Settings → Claude Code (MCP)**, or run:
+
+```bash
+claude mcp add voxa --scope user -- "$HOME/Library/Application Support/Voxa/.venv/bin/python" "$HOME/Library/Application Support/Voxa/Scripts/voxa_mcp.py"
+```
+
+Then start a new Claude Code session (`/mcp` lists the Voxa tools). Voxa must be installed; if it is not running, it is launched in the background.
+
+**Examples**:
+- "Transcribe `~/Desktop/meeting.mov` and write the meeting report"
+- "List my transcriptions from this week"
+- Prompt `/compte_rendu`: transcribe if needed, confirm who is who, write the report and save it in Voxa
+
+| Tool | Description |
+|---|---|
+| `transcribe_file` | Import an audio/video file and start transcription (returns an id) |
+| `wait_for_transcription`, `get_transcription_status` | Wait for / check progress |
+| `get_transcript` | Read the transcript (paginated for long meetings) |
+| `rename_speakers` | Name speakers (`SPEAKER_00` → name); voices are remembered |
+| `save_meeting_report` | Save a Markdown report in Voxa (report tab and exports) |
+| `export_transcript` | Export to txt, md, srt or json |
+| `list_transcriptions`, `list_known_speakers` | Search the library, list known voices |
+
 ## Build from source
 
 ```bash
@@ -91,11 +123,31 @@ cd transcription
 
 Open `TranscriptionApp/TranscriptionApp.xcodeproj` in Xcode, then Build & Run (Cmd+R).
 
-To build the DMG:
+The Xcode project is generated from `TranscriptionApp/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). After adding or removing files, edit `project.yml` rather than the `.xcodeproj`, then run:
 
 ```bash
-./scripts/build-dmg.sh
+cd TranscriptionApp && xcodegen generate
 ```
+
+### Releasing a new version
+
+1. In `TranscriptionApp/project.yml`, bump `MARKETING_VERSION` **and** `CURRENT_PROJECT_VERSION` (build number). Sparkle compares build numbers: if it does not increase, users never see the update. Then run `xcodegen generate` and commit.
+2. Build, sign, notarize and generate the appcast:
+
+   ```bash
+   ./scripts/build-dmg.sh
+   ```
+
+   Requires the "Developer ID Application" certificate and notarization credentials stored once with `xcrun notarytool store-credentials "Voxa-Notarize" --apple-id <apple-id> --team-id C3A57SQ939`. If the build fails with "Operation not permitted", delete `build/Build/Products/Release/Voxa.app` and retry.
+3. Push, then create the release **before** publishing the appcast (so the feed never points to a missing file):
+
+   ```bash
+   git push
+   gh release create vX.Y.Z Voxa.dmg Voxa.zip --title "Voxa vX.Y.Z"
+   git add docs/appcast.xml && git commit -m "Update appcast.xml for vX.Y.Z" && git push
+   ```
+
+Sparkle settings (`SUFeedURL`, `SUPublicEDKey`) live in `TranscriptionApp/TranscriptionApp/Info.plist`: `INFOPLIST_KEY_*` build settings are ignored by Xcode for non-Apple keys.
 
 ## Architecture
 
@@ -103,11 +155,11 @@ To build the DMG:
 TranscriptionApp/
 └── TranscriptionApp/
     ├── Models/           # SwiftData models, enums
-    ├── Services/         # PythonBridge, DependencyManager, OllamaService, RecordingService
+    ├── Services/         # PythonBridge, DependencyManager, OllamaService, RecordingService, LocalAPIServer
     ├── ViewModels/       # TranscriptionListVM, RecordingVM
     ├── Views/            # SwiftUI views (SetupView, Detail, Sidebar, Import, MenuBar)
     ├── Utilities/        # EstimationService, SpeakerColors, TimeFormatting
-    └── Resources/        # Bundled Python scripts, localizations
+    └── Resources/        # Bundled Python scripts (transcription, MCP server), localizations
 ```
 
 ### Swift ↔ Python Communication
@@ -118,6 +170,17 @@ The Swift app launches the bundled Python script as a subprocess and communicate
 Swift (PythonBridge) → Process() → transcribe_bridge.py
                      ← stdout (JSON Lines: progress, segments, diarization)
 ```
+
+### Claude Code (MCP) Architecture
+
+```
+Claude Code ──stdio──▶ voxa_mcp.py ──HTTP 127.0.0.1:47821──▶ Voxa (LocalAPIServer) ──▶ SwiftData + transcribe_bridge.py
+```
+
+- `voxa_mcp.py` is a dependency-free MCP server (stdio, JSON-RPC). It is bundled with the app and redeployed to `~/Library/Application Support/Voxa/Scripts/` at each launch.
+- `LocalAPIServer` listens on the loopback interface only. Requests need a bearer token stored with the port in `~/Library/Application Support/Voxa/api.json` (mode 600).
+- The app stays the only writer of the SwiftData store, so everything done through Claude appears in the Voxa library.
+- Only files inside the user's home folder can be transcribed through the API.
 
 ### Recording Architecture
 
