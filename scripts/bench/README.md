@@ -105,3 +105,32 @@ Résultat (octobre 2026, M3 Pro, même modèle large-v3-turbo) :
 | Reconnaissance des voix | mesurée | non mesurable via la CLI (empreintes non exposées) |
 
 `VOXA_WHISPERKIT_CHUNKING=none` (sans découpage par détection de voix) donne de moins bons résultats.
+
+## Moteur natif de Voxa (`voxa-engine`, branche native-engine)
+
+Le moteur natif intégré à l'app (`Packages/VoxaEngine`) se mesure comme un bridge :
+
+```bash
+B=$(cd Packages/VoxaEngine && swift build -c release --show-bin-path)/voxa-engine
+"$B" --prepare --models-dir ~/Projets/voxa-bench/.native-models      # une fois par version de l'exécutable
+"$PY" scripts/bench/run_bench.py --label native --bridge "$B" --bridge-args "--models-dir $HOME/Projets/voxa-bench/.native-models"
+```
+
+Résultat final (1er octobre 2026, M3 Pro, 64 min d'audio, comparé au moteur Python de la 1.5.0) :
+
+| | Python 1.5.0 | Natif |
+|---|---|---|
+| Temps total | 620 s (×6,2) | **458 s (×8,4)** |
+| dont transcription | 338 s | 356 s |
+| dont diarisation | 247 s | **26 s** |
+| dont chargement des modèles | ~35 s | ~76 s (~12 s par fichier) |
+| Mots gardés | 93,8 % | 91,6 % |
+| Ponctuation (Pet Grooming, franglais) | 0,9 | **7,5** |
+| Nombre d'intervenants juste | 5/6 | 4/6 (oublie un intervenant de quelques secondes) |
+| Reconnaissance des voix | 3/3, 0 faux | 3/3, 0 faux |
+
+Points appris en route :
+- Core ML refait la préparation des modèles (3 à 5 min) à chaque **nouvel exécutable** : l'app la relance donc en arrière-plan après chaque mise à jour.
+- Le seuil `firstTokenLogProbThreshold` par défaut de l'API WhisperKit (-1,5) fait sauter des fenêtres entières de parole : il est désactivé (comme dans `whisperkit-cli`).
+- Diarisation en parallèle de la transcription : aucun gain (option `--parallel`).
+- Le seuil de regroupement de SpeakerKit (0,6 à 0,8) ne change presque rien ; les intervenants parasites sont filtrés après coup.
