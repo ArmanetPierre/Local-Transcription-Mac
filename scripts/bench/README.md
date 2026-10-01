@@ -81,3 +81,27 @@ PYTHONPATH=~/Projets/voxa-bench/.overlay-parakeet "$PY" scripts/bench/run_bench.
 ```
 
 Résultat (octobre 2026) : comparable à Whisper sur la réunion en anglais, mais inutilisable sur les réunions en français (40 à 60 % de mots perdus, phrases traduites en anglais). Transcription environ 2,5 fois plus rapide que Whisper sur Mac.
+
+## Variante native WhisperKit (expérimentale)
+
+`whisperkit_bridge.py` fait tourner la chaîne 100 % native d'Argmax (`whisperkit-cli` : WhisperKit sur Core ML + diarisation SpeakerKit), sans Python :
+
+```bash
+brew install whisperkit-cli
+# premier lancement : télécharge le modèle (~1,5 Go) et le prépare pour la puce (plusieurs minutes)
+VOXA_WHISPERKIT_MODEL=~/Projets/voxa-bench/.whisperkit-models/openai_whisper-large-v3-v20240930_turbo \
+    "$PY" scripts/bench/run_bench.py --label whisperkit --bridge scripts/bench/whisperkit_bridge.py
+```
+
+Résultat (octobre 2026, M3 Pro, même modèle large-v3-turbo) :
+
+| | Chaîne actuelle (MLX + pyannote) | WhisperKit + SpeakerKit |
+|---|---|---|
+| Vitesse (à chaud) | ×6,2 le temps réel | **×16** le temps réel |
+| Premier lancement | rapide | plusieurs minutes (préparation Core ML, une fois par emplacement du modèle) |
+| Mots gardés | 93,8 % | 91,6 % (saute des passages où deux personnes parlent en même temps) |
+| Ponctuation (pour 100 mots) | 9,9 | 8,3 |
+| Nombre d'intervenants | 22/22 | 21/22 justes, mais en compte un de trop sur 2 appels sur 6 |
+| Reconnaissance des voix | mesurée | non mesurable via la CLI (empreintes non exposées) |
+
+`VOXA_WHISPERKIT_CHUNKING=none` (sans découpage par détection de voix) donne de moins bons résultats.
