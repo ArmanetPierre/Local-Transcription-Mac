@@ -146,6 +146,32 @@ final class TranscriptionListVM {
         return project
     }
 
+    /// Reprend les transcriptions interrompues (app quittee pendant le traitement) :
+    /// sans ca, elles resteraient "en attente" pour toujours.
+    @MainActor
+    func resumeInterrupted(modelContext: ModelContext) {
+        let interrupted: Set<String> = ["pending", "transcribing", "diarizing", "merging"]
+        let descriptor = FetchDescriptor<TranscriptionProject>(sortBy: [SortDescriptor(\.createdAt)])
+        let projects = ((try? modelContext.fetch(descriptor)) ?? []).filter {
+            interrupted.contains($0.statusRaw) && !batchQueue.contains(URL(fileURLWithPath: $0.audioFilePath))
+        }
+        for project in projects {
+            guard FileManager.default.fileExists(atPath: project.audioFilePath) else {
+                project.status = .failed
+                project.errorMessage = String(localized: "The audio file of this transcription no longer exists.")
+                continue
+            }
+            print("[ListVM] Reprise de la transcription interrompue: \(project.title)")
+            project.status = .pending
+            project.progressPercent = 0
+            project.currentStep = nil
+            batchQueue.append(URL(fileURLWithPath: project.audioFilePath))
+        }
+        if !projects.isEmpty && !bridge.isRunning && currentProject == nil {
+            processNext(modelContext: modelContext)
+        }
+    }
+
     // MARK: - Processing
 
     func processNext(modelContext: ModelContext) {
@@ -327,6 +353,11 @@ final class TranscriptionListVM {
                                 names[label] = name
                             }
                             project.speakerNames = names
+                            var scores: [String: Double] = [:]
+                            for label in matches.keys {
+                                scores[label] = msg.speakerMatchScores?[label] ?? 0
+                            }
+                            project.autoRecognizedSpeakers = scores
                             print("[ListVM]   Noms auto-matches: \(matches)")
                         }
                     }
@@ -392,15 +423,22 @@ final class TranscriptionListVM {
         }
     }
 
-    /// Fusionne les segments consecutifs du meme speaker
-    /// (seulement si speaker non-nil, sinon on garde les segments separes)
+    /// Au-dela de cette duree, un bloc s'arrete a la prochaine fin de phrase
+    static let mergeSoftLimit: Double = 60
+    /// Et au-dela de celle-ci, il s'arrete quoi qu'il arrive (texte sans ponctuation)
+    static let mergeHardLimit: Double = 180
+
+    /// Fusionne les segments consecutifs du meme speaker en paragraphes lisibles
+    /// (seulement si speaker non-nil, sinon on garde les segments separes).
+    /// Un long monologue est coupe en paragraphes d'environ une minute.
     static func mergeConsecutiveSpeakerSegments(_ segments: [ResultSegment]) -> [ResultSegment] {
         var merged: [ResultSegment] = []
         for seg in segments {
             if let last = merged.last,
                let lastSpeaker = last.speaker, !lastSpeaker.isEmpty,
                let segSpeaker = seg.speaker, !segSpeaker.isEmpty,
-               lastSpeaker == segSpeaker {
+               lastSpeaker == segSpeaker,
+               !isParagraphFull(last) {
                 merged[merged.count - 1] = ResultSegment(
                     id: last.id,
                     start: last.start,
@@ -415,6 +453,14 @@ final class TranscriptionListVM {
             }
         }
         return merged
+    }
+
+    private static func isParagraphFull(_ block: ResultSegment) -> Bool {
+        let duration = block.end - block.start
+        if duration >= mergeHardLimit { return true }
+        guard duration >= mergeSoftLimit else { return false }
+        let ending = block.text.trimmingCharacters(in: .whitespaces).last
+        return ending.map { ".?!…".contains($0) } ?? false
     }
 
     func cancelCurrent() {

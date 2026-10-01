@@ -121,12 +121,15 @@ struct ResultMessage: Decodable {
     let totalDurationSec: Double
     let speakerEmbeddings: [String: [Double]]?
     let speakerMatches: [String: String]?
+    /// Similarite (0-1) de chaque intervenant reconnu automatiquement
+    let speakerMatchScores: [String: Double]?
 
     enum CodingKeys: String, CodingKey {
         case segments, language
         case totalDurationSec = "total_duration_sec"
         case speakerEmbeddings = "speaker_embeddings"
         case speakerMatches = "speaker_matches"
+        case speakerMatchScores = "speaker_match_scores"
     }
 }
 

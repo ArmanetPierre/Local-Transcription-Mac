@@ -316,11 +316,14 @@ final class LocalAPIServer {
         }
 
         var names = project.speakerNames
+        var auto = project.autoRecognizedSpeakers
         for (label, name) in mapping {
             let trimmed = name.trimmingCharacters(in: .whitespaces)
             names[label] = trimmed.isEmpty ? nil : trimmed
+            auto.removeValue(forKey: label)
         }
         project.speakerNames = names
+        project.autoRecognizedSpeakers = auto
         SpeakerNameHistory.addNames(Array(mapping.values))
         // Enregistre les empreintes vocales (si encore en memoire) pour la reconnaissance future
         SpeakerEmbeddingStore.shared.confirmSpeakerNames(projectId: project.id, labelToName: mapping)
@@ -377,6 +380,10 @@ final class LocalAPIServer {
                 "speaking_sec": Int(segments.reduce(0) { $0 + $1.duration }.rounded()),
             ]
             if let name = project.speakerNames[label] { entry["name"] = name }
+            if let score = project.autoRecognizedSpeakers[label] {
+                entry["recognized_automatically"] = true
+                entry["recognition_score"] = (score * 100).rounded() / 100
+            }
             return entry
         }
     }
@@ -405,11 +412,8 @@ final class LocalAPIServer {
         return .json(dict)
     }
 
-    private func knownSpeakers() -> [String] {
-        let path = SpeakerEmbeddingStore.embeddingsFilePath
-        guard let data = FileManager.default.contents(atPath: path),
-              let saved = try? JSONDecoder().decode([String: [Double]].self, from: data) else { return [] }
-        return saved.keys.sorted()
+    private func knownSpeakers() -> [[String: Any]] {
+        SpeakerEmbeddingStore.shared.knownSpeakers().map { ["name": $0.name, "voice_samples": $0.samples] }
     }
 
     private static func parseDate(_ string: String) -> Date? {

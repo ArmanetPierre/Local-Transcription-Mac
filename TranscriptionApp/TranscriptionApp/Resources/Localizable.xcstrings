@@ -1788,6 +1788,136 @@
           }
         }
       }
+    },
+    "Known Voices" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voix connues"
+          }
+        }
+      }
+    },
+    "No voices yet. Name the speakers of a transcription and Voxa will recognize them next time." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune voix pour l'instant. Nommez les intervenants d'une transcription et Voxa les reconnaîtra la prochaine fois."
+          }
+        }
+      }
+    },
+    "%lld samples" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld empreintes"
+          }
+        }
+      }
+    },
+    "One sample per transcription where this person was named. More samples recognize them better across recording setups." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une empreinte par transcription où cette personne a été nommée. Plus il y en a, mieux elle est reconnue d'un type d'enregistrement à l'autre."
+          }
+        }
+      }
+    },
+    "Rename or merge with another person" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer ou fusionner avec une autre personne"
+          }
+        }
+      }
+    },
+    "Forget this voice" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier cette voix"
+          }
+        }
+      }
+    },
+    "Renaming to an existing name merges the two people." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer avec un nom existant fusionne les deux personnes."
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer"
+          }
+        }
+      }
+    },
+    "Forget the voice of %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier la voix de %@ ?"
+          }
+        }
+      }
+    },
+    "Forget" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier"
+          }
+        }
+      }
+    },
+    "Voxa will no longer recognize this person automatically. Existing transcriptions keep their names." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voxa ne reconnaîtra plus cette personne automatiquement. Les transcriptions existantes gardent leurs noms."
+          }
+        }
+      }
+    },
+    "The audio file of this transcription no longer exists." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier audio de cette transcription n'existe plus."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

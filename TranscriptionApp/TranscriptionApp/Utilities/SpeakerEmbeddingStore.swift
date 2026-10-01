@@ -90,53 +90,148 @@ final class SpeakerEmbeddingStore {
         try? data.write(to: projectEmbeddingsFileURL, options: .atomic)
     }
 
-    // MARK: - Confirmed (save to disk)
+    // MARK: - Base de voix (noms confirmes)
 
-    /// Sauvegarder les embeddings avec les noms confirmes par l'utilisateur.
+    /// Nombre maximum d'empreintes gardees par personne (les plus anciennes partent)
+    static let maxSamplesPerSpeaker = 10
+
+    /// Sauvegarder les empreintes des intervenants nommes par l'utilisateur.
     /// labelToName : ["SPEAKER_00": "Pierre", "SPEAKER_01": "Jean"]
+    ///
+    /// Chaque personne garde plusieurs empreintes (une par transcription) : une voix
+    /// en reunion et la meme en visio se ressemblent peu, il faut connaitre les deux.
+    /// Renommer un intervenant deplace son empreinte ; un nom vide la retire.
     func confirmSpeakerNames(projectId: UUID, labelToName: [String: String]) {
         guard let embeddings = getPendingEmbeddings(projectId: projectId) else {
-            print("[EmbeddingStore] confirmSpeakerNames: aucun embedding en attente pour \(projectId)")
+            print("[EmbeddingStore] confirmSpeakerNames: aucun embedding pour \(projectId)")
             return
         }
 
-        var saved = loadSavedEmbeddings()
-
+        var gallery = loadGallery()
         for (label, name) in labelToName {
+            let source = "\(projectId.uuidString):\(label)"
+            gallery.removeSamples(source: source)
             let trimmed = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty, let embedding = embeddings[label] else { continue }
-            saved[trimmed] = embedding
-            print("[EmbeddingStore] Sauvegarde embedding pour '\(trimmed)' (dim=\(embedding.count))")
+            gallery.add(
+                VoiceSample(embedding: embedding, source: source, added: Date()),
+                to: trimmed,
+                limit: Self.maxSamplesPerSpeaker
+            )
+            print("[EmbeddingStore] Empreinte enregistree pour '\(trimmed)' (dim=\(embedding.count))")
         }
+        saveGallery(gallery)
+        print("[EmbeddingStore] \(gallery.speakers.count) personnes connues")
+    }
 
-        saveToDisk(saved)
-        print("[EmbeddingStore] \(saved.count) speakers sauvegardes au total")
+    // MARK: - Gestion des voix connues (Reglages)
+
+    /// Personnes connues et nombre d'empreintes, triees par nom
+    func knownSpeakers() -> [(name: String, samples: Int)] {
+        loadGallery().speakers
+            .map { (name: $0.key, samples: $0.value.count) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Renommer une personne ; si le nouveau nom existe deja, les deux sont fusionnees.
+    func renameSpeaker(_ oldName: String, to newName: String) {
+        let trimmed = newName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, trimmed != oldName else { return }
+        var gallery = loadGallery()
+        guard let samples = gallery.speakers.removeValue(forKey: oldName) else { return }
+        for sample in samples {
+            gallery.add(sample, to: trimmed, limit: Self.maxSamplesPerSpeaker)
+        }
+        saveGallery(gallery)
+    }
+
+    /// Oublier la voix d'une personne
+    func deleteSpeaker(_ name: String) {
+        var gallery = loadGallery()
+        gallery.speakers.removeValue(forKey: name)
+        saveGallery(gallery)
     }
 
     // MARK: - File I/O
 
-    private func loadSavedEmbeddings() -> [String: [Double]] {
-        let path = Self.embeddingsFilePath
-        guard FileManager.default.fileExists(atPath: path),
-              let data = FileManager.default.contents(atPath: path),
-              let decoded = try? JSONDecoder().decode([String: [Double]].self, from: data) else {
-            return [:]
+    func loadGallery() -> VoiceGallery {
+        guard let data = FileManager.default.contents(atPath: Self.embeddingsFilePath) else {
+            return VoiceGallery()
         }
-        return decoded
+        return VoiceGallery.decode(data)
     }
 
-    private func saveToDisk(_ embeddings: [String: [Double]]) {
-        let path = Self.embeddingsFilePath
-        let dirPath = (path as NSString).deletingLastPathComponent
+    private func saveGallery(_ gallery: VoiceGallery) {
+        let url = URL(fileURLWithPath: Self.embeddingsFilePath)
         try? FileManager.default.createDirectory(
-            atPath: dirPath,
-            withIntermediateDirectories: true
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-
-        guard let data = try? JSONEncoder().encode(embeddings) else {
-            print("[EmbeddingStore] ERREUR: impossible d'encoder les embeddings")
+        guard let data = try? gallery.encoded() else {
+            print("[EmbeddingStore] ERREUR: impossible d'encoder la base de voix")
             return
         }
-        FileManager.default.createFile(atPath: path, contents: data)
+        try? data.write(to: url, options: .atomic)
+    }
+}
+
+// MARK: - Format de la base de voix
+
+/// Une empreinte vocale, avec la transcription d'ou elle vient
+struct VoiceSample: Codable, Equatable {
+    var embedding: [Double]
+    /// "<uuid du projet>:<label>" : evite les doublons quand on renomme
+    var source: String?
+    var added: Date?
+}
+
+/// Base de voix (speaker_embeddings.json).
+/// v2 : {"version": 2, "speakers": {"Nom": [VoiceSample, ...]}}
+/// v1 (Voxa <= 1.4) : {"Nom": [floats]}, convertie a la lecture.
+struct VoiceGallery: Codable, Equatable {
+    var version = 2
+    var speakers: [String: [VoiceSample]] = [:]
+
+    static func decode(_ data: Data) -> VoiceGallery {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        if let v2 = try? decoder.decode(VoiceGallery.self, from: data), v2.version == 2 {
+            return v2
+        }
+        if let v1 = try? decoder.decode([String: [Double]].self, from: data) {
+            var gallery = VoiceGallery()
+            for (name, embedding) in v1 {
+                gallery.speakers[name] = [VoiceSample(embedding: embedding, source: nil, added: nil)]
+            }
+            return gallery
+        }
+        return VoiceGallery()
+    }
+
+    func encoded() throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.sortedKeys]
+        return try encoder.encode(self)
+    }
+
+    mutating func add(_ sample: VoiceSample, to name: String, limit: Int) {
+        var samples = speakers[name] ?? []
+        samples.append(sample)
+        if samples.count > limit {
+            samples.removeFirst(samples.count - limit)
+        }
+        speakers[name] = samples
+    }
+
+    /// Retirer l'empreinte venant d'un intervenant precis (chez n'importe quelle personne)
+    mutating func removeSamples(source: String) {
+        for (name, samples) in speakers {
+            let kept = samples.filter { $0.source != source }
+            if kept.isEmpty {
+                speakers.removeValue(forKey: name)
+            } else if kept.count != samples.count {
+                speakers[name] = kept
+            }
+        }
     }
 }

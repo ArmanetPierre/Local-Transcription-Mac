@@ -51,6 +51,8 @@ final class TranscriptionDetailVM {
         var names = project.speakerNames
         if newName.trimmingCharacters(in: .whitespaces).isEmpty {
             names.removeValue(forKey: label)
+            // Retirer aussi sa voix de la base
+            SpeakerEmbeddingStore.shared.confirmSpeakerNames(projectId: project.id, labelToName: [label: ""])
         } else {
             names[label] = newName
             // Sauvegarder le nom dans l'historique global
@@ -59,6 +61,8 @@ final class TranscriptionDetailVM {
             SpeakerEmbeddingStore.shared.confirmSpeakerNames(projectId: project.id, labelToName: [label: newName])
         }
         project.speakerNames = names
+        // Nom choisi par l'utilisateur : ce n'est plus une reconnaissance automatique
+        project.autoRecognizedSpeakers.removeValue(forKey: label)
     }
 
     func exportProject(_ project: TranscriptionProject, format: ExportFormat) {

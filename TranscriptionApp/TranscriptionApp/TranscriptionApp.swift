@@ -80,6 +80,8 @@ struct TranscriptionApp: App {
                             await dependencyManager.checkAll()
                             if !dependencyManager.overallReady {
                                 setupCompleted = false
+                            } else {
+                                listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
                             }
                         }
                 } else {

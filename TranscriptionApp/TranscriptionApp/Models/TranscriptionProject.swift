@@ -13,6 +13,8 @@ final class TranscriptionProject {
     var language: String?
     var diarizationEnabled: Bool = true
     var speakerNamesData: Data?
+    /// Intervenants nommes automatiquement par reconnaissance vocale : {label: similarite}
+    var autoRecognizedSpeakersData: Data?
     var createdAt: Date = Date()
     var completedAt: Date?
     var transcriptionDurationSec: Double?
@@ -53,6 +55,16 @@ final class TranscriptionProject {
 
     var uniqueSpeakers: [String] {
         Array(Set(segments.compactMap(\.speakerLabel))).sorted()
+    }
+
+    var autoRecognizedSpeakers: [String: Double] {
+        get {
+            guard let data = autoRecognizedSpeakersData else { return [:] }
+            return (try? JSONDecoder().decode([String: Double].self, from: data)) ?? [:]
+        }
+        set {
+            autoRecognizedSpeakersData = newValue.isEmpty ? nil : try? JSONEncoder().encode(newValue)
+        }
     }
 
     var speakerSummaries: [String: String] {

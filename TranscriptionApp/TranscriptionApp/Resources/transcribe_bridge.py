@@ -116,16 +116,39 @@ def get_audio_duration(audio_path):
 
 
 def load_embeddings_file(filepath):
-    """Charger les embeddings sauvegardes depuis un fichier JSON."""
+    """Charger la base de voix : {nom: [empreinte, ...]}.
+
+    Deux formats sur disque :
+      - v1 (Voxa <= 1.4) : {"Nom": [floats]}            -> une empreinte par personne
+      - v2               : {"version": 2, "speakers": {"Nom": [{"embedding": [floats], ...}, ...]}}
+    """
     try:
         if filepath and os.path.isfile(filepath):
             with open(filepath, "r") as f:
                 data = json.load(f)
-                log(f"Embeddings charges: {len(data)} speakers depuis {filepath}")
-                return data
+            gallery = parse_gallery(data)
+            samples = sum(len(v) for v in gallery.values())
+            log(f"Voix connues: {len(gallery)} personnes, {samples} empreintes ({filepath})")
+            return gallery
     except Exception as e:
         log(f"Impossible de charger les embeddings: {e}", level="debug")
     return {}
+
+
+def parse_gallery(data):
+    """Normalise les formats v1/v2 en {nom: [empreinte, ...]}."""
+    if isinstance(data, dict) and data.get("version") == 2:
+        return {
+            name: [s["embedding"] for s in samples if s.get("embedding")]
+            for name, samples in data.get("speakers", {}).items()
+        }
+    gallery = {}
+    for name, value in (data or {}).items():
+        if value and isinstance(value[0], (int, float)):
+            gallery[name] = [value]          # v1 : une seule empreinte
+        else:
+            gallery[name] = list(value or [])  # liste d'empreintes
+    return gallery
 
 
 def cosine_similarity(a, b):
@@ -140,40 +163,58 @@ def cosine_similarity(a, b):
     return dot / (norm_a * norm_b)
 
 
-def match_speakers_with_saved(new_embeddings, saved_embeddings, threshold=0.65):
-    """Matcher les nouveaux speakers avec les sauvegardes via similarite cosinus.
+def speaker_scores(new_embeddings, gallery):
+    """Similarite de chaque nouvel intervenant avec chaque personne connue.
+
+    Le score d'une personne est le meilleur score sur ses empreintes : une voix
+    enregistree en reunion et la meme en visio peuvent etre tres differentes,
+    il suffit qu'un des contextes connus ressemble.
+    Retourne {label: {nom: score}}.
+    """
+    gallery = parse_gallery(gallery)
+    scores = {}
+    warned = set()
+    for label, emb in new_embeddings.items():
+        scores[label] = {}
+        for name, samples in gallery.items():
+            usable = [s for s in samples if len(s) == len(emb)]
+            if len(usable) < len(samples) and name not in warned:
+                warned.add(name)
+                log(f"Voix '{name}' : {len(samples) - len(usable)} empreinte(s) ignoree(s), "
+                    f"dimension differente de {len(emb)} (autre modele)", level="warning")
+            if usable:
+                scores[label][name] = max(cosine_similarity(emb, s) for s in usable)
+    return scores
+
+
+def match_speakers_with_saved(new_embeddings, saved_embeddings, threshold=0.65, scores_out=None):
+    """Matcher les nouveaux speakers avec les personnes connues via similarite cosinus.
 
     Utilise un matching glouton (meilleur score d'abord) pour eviter les doublons.
-    Retourne: {new_speaker_label: matched_name}
+    Retourne: {new_speaker_label: matched_name}. Si scores_out est un dict, il recoit
+    le score de chaque match ({label: score}).
     """
     if not new_embeddings or not saved_embeddings:
         return {}
 
-    # Calculer toutes les similarites
-    scores = []
-    for new_label, new_emb in new_embeddings.items():
-        for saved_name, saved_emb in saved_embeddings.items():
-            # Ignorer les embeddings d'un autre modele (dimension differente)
-            if len(saved_emb) != len(new_emb):
-                if new_label == next(iter(new_embeddings)):
-                    log(f"Voix '{saved_name}' ignoree : empreinte de dimension {len(saved_emb)} "
-                        f"au lieu de {len(new_emb)} (autre modele)", level="warning")
-                continue
-            sim = cosine_similarity(new_emb, saved_emb)
-            if sim >= threshold:
-                scores.append((sim, new_label, saved_name))
+    candidates = [
+        (sim, label, name)
+        for label, by_name in speaker_scores(new_embeddings, saved_embeddings).items()
+        for name, sim in by_name.items()
+        if sim >= threshold
+    ]
 
     # Trier par similarite decroissante et attribuer de maniere gloutonne
-    scores.sort(reverse=True)
+    candidates.sort(reverse=True)
     matches = {}
     used_names = set()
-    used_labels = set()
 
-    for sim, new_label, saved_name in scores:
-        if new_label not in used_labels and saved_name not in used_names:
+    for sim, new_label, saved_name in candidates:
+        if new_label not in matches and saved_name not in used_names:
             matches[new_label] = saved_name
-            used_labels.add(new_label)
             used_names.add(saved_name)
+            if scores_out is not None:
+                scores_out[new_label] = round(sim, 3)
             log(f"Speaker match: {new_label} -> {saved_name} (similarite: {sim:.3f})")
 
     return matches
@@ -218,6 +259,58 @@ def load_diarization_pipeline(hf_token, preferred=None):
             log(f"Pipeline {name} indisponible: {e}", level="debug")
             errors.append(e)
     raise errors[-1]
+
+
+def _speaker_at(start, end, turns):
+    """Intervenant qui couvre le plus [start, end] ; sinon le tour le plus proche."""
+    best, best_overlap = None, 0.0
+    nearest, nearest_gap = None, float("inf")
+    for t_start, t_end, speaker in turns:
+        overlap = min(end, t_end) - max(start, t_start)
+        if overlap > best_overlap:
+            best, best_overlap = speaker, overlap
+        gap = max(t_start - end, start - t_end, 0.0)
+        if gap < nearest_gap:
+            nearest, nearest_gap = speaker, gap
+    if best is not None:
+        return best
+    # Mot entre deux tours de parole (silence, debut de phrase) : tour le plus proche
+    return nearest if nearest_gap <= 1.0 else None
+
+
+def split_segments_by_speaker(segments, diarization):
+    """Attribue un intervenant a chaque MOT, puis coupe les segments Whisper aux
+    changements d'intervenant.
+
+    Un segment Whisper peut contenir la fin de la phrase de l'un et le debut de
+    la reponse de l'autre : l'attribuer en bloc colle la reponse au mauvais
+    intervenant. Les segments sans horodatage par mot sont attribues en bloc.
+    """
+    turns = [(t.start, t.end, spk) for t, _, spk in diarization.itertracks(yield_label=True)]
+    output = []
+    for seg in segments:
+        words = [w for w in seg.get("words") or [] if w.get("word", "").strip()]
+        if not words:
+            speaker = _speaker_at(seg["start"], seg["end"], turns) or "Inconnu"
+            output.append(dict(seg, speaker=speaker))
+            continue
+        run = None
+        for w in words:
+            speaker = _speaker_at(w["start"], w["end"], turns)
+            if speaker is None:
+                speaker = run["speaker"] if run else "Inconnu"
+            if run is None or speaker != run["speaker"]:
+                if run:
+                    output.append(run)
+                run = dict(seg, start=w["start"], end=w["end"], text="", speaker=speaker, words=[])
+            run["text"] += w["word"]
+            run["end"] = w["end"]
+            run["words"].append(w)
+        output.append(run)
+    for seg in output:
+        seg["text"] = seg["text"].strip()
+        seg.pop("words", None)
+    return [s for s in output if s["text"]]
 
 
 MLX_MODELS = {
@@ -296,7 +389,16 @@ def main():
             print("[1/3] Transcription en cours (mlx-whisper, GPU)...")
 
         t0 = time.time()
-        transcribe_kwargs = {"path_or_hf_repo": model_id, "verbose": not JSON_PROTOCOL}
+        transcribe_kwargs = {
+            "path_or_hf_repo": model_id,
+            "verbose": not JSON_PROTOCOL,
+            # Horodatage par mot : necessaire pour couper aux changements d'intervenant
+            "word_timestamps": True,
+        }
+        # Reglages Whisper supplementaires (banc de mesure uniquement)
+        if os.environ.get("VOXA_WHISPER_OPTIONS"):
+            transcribe_kwargs.update(json.loads(os.environ["VOXA_WHISPER_OPTIONS"]))
+            log(f"Options Whisper: {transcribe_kwargs}")
         if args.language:
             transcribe_kwargs["language"] = args.language
 
@@ -453,7 +555,7 @@ def main():
             else:
                 print("[3/3] Attribution des speakers aux segments...")
 
-            segments = assign_speakers_to_segments(segments, assignment_diarization)
+            segments = split_segments_by_speaker(segments, assignment_diarization)
             speakers = sorted(set(seg.get("speaker", "Inconnu") for seg in segments))
 
             # Construire le dictionnaire d'embeddings par speaker
@@ -473,11 +575,12 @@ def main():
 
             # Comparer avec les embeddings sauvegardes
             speaker_matches = {}
+            speaker_match_scores = {}
             if speaker_embeddings and args.embeddings_file:
                 saved = load_embeddings_file(args.embeddings_file)
                 if saved:
                     speaker_matches = match_speakers_with_saved(
-                        speaker_embeddings, saved, threshold=0.65
+                        speaker_embeddings, saved, threshold=0.65, scores_out=speaker_match_scores
                     )
                     if speaker_matches:
                         log(f"Matching automatique: {speaker_matches}")
@@ -523,6 +626,7 @@ def main():
                     result_msg["speaker_embeddings"] = speaker_embeddings
                 if speaker_matches:
                     result_msg["speaker_matches"] = speaker_matches
+                    result_msg["speaker_match_scores"] = speaker_match_scores
 
             emit(result_msg)
         else:

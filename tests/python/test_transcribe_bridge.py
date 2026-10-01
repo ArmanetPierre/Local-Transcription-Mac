@@ -55,6 +55,30 @@ class MatchSpeakersTests(unittest.TestCase):
         self.assertEqual(bridge.match_speakers_with_saved({"S": [1.0]}, {}), {})
 
 
+class GalleryTests(unittest.TestCase):
+    def test_parse_v1_wraps_single_embedding(self):
+        self.assertEqual(bridge.parse_gallery({"Pierre": [0.1, 0.2]}), {"Pierre": [[0.1, 0.2]]})
+
+    def test_parse_v2(self):
+        data = {"version": 2, "speakers": {"Pierre": [{"embedding": [1.0, 0.0], "source": "x"},
+                                                      {"embedding": [0.0, 1.0]}]}}
+        self.assertEqual(bridge.parse_gallery(data), {"Pierre": [[1.0, 0.0], [0.0, 1.0]]})
+
+    def test_best_sample_wins(self):
+        # La voix "visio" de Pierre ne ressemble qu'a sa deuxieme empreinte
+        gallery = {"version": 2, "speakers": {
+            "Pierre": [{"embedding": [1.0, 0.0, 0.0]}, {"embedding": [0.0, 1.0, 0.0]}],
+            "Olivier": [{"embedding": [0.0, 0.0, 1.0]}]}}
+        scores = {}
+        matches = bridge.match_speakers_with_saved({"SPEAKER_00": [0.05, 1.0, 0.0]}, gallery, scores_out=scores)
+        self.assertEqual(matches, {"SPEAKER_00": "Pierre"})
+        self.assertGreater(scores["SPEAKER_00"], 0.99)
+
+    def test_speaker_scores_ignore_other_dimensions(self):
+        scores = bridge.speaker_scores({"S": [1.0, 0.0]}, {"A": [[1.0, 0.0], [1.0, 0.0, 0.0]]})
+        self.assertAlmostEqual(scores["S"]["A"], 1.0, places=5)
+
+
 class LoadEmbeddingsTests(unittest.TestCase):
     def test_missing_file_returns_empty(self):
         self.assertEqual(bridge.load_embeddings_file("/nonexistent/embeddings.json"), {})
@@ -64,7 +88,7 @@ class LoadEmbeddingsTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
             json.dump({"Pierre": [0.1, 0.2]}, f)
         try:
-            self.assertEqual(bridge.load_embeddings_file(f.name), {"Pierre": [0.1, 0.2]})
+            self.assertEqual(bridge.load_embeddings_file(f.name), {"Pierre": [[0.1, 0.2]]})
         finally:
             os.remove(f.name)
 
@@ -94,6 +118,41 @@ class AssignSpeakersTests(unittest.TestCase):
         diarization = annotation((0, 4.5, "SPEAKER_00"), (4.5, 9, "SPEAKER_01"))
         bridge.assign_speakers_to_segments(segments, diarization)
         self.assertEqual([s["speaker"] for s in segments], ["SPEAKER_00", "SPEAKER_01"])
+
+
+def word(text, start, end):
+    return {"word": text, "start": start, "end": end, "probability": 0.9}
+
+
+class SplitBySpeakerTests(unittest.TestCase):
+    def test_segment_is_split_at_speaker_change(self):
+        segments = [{"start": 0.0, "end": 4.0, "text": " je t'explique en fait c'est simple", "words": [
+            word(" je", 0.0, 0.3), word(" t'explique", 0.3, 0.9), word(" en", 0.9, 1.1),
+            word(" fait", 2.1, 2.4), word(" c'est", 2.4, 2.8), word(" simple", 2.8, 3.5)]}]
+        diarization = annotation((0, 1.5, "SPEAKER_01"), (1.8, 4, "SPEAKER_00"))
+        out = bridge.split_segments_by_speaker(segments, diarization)
+        self.assertEqual([(s["speaker"], s["text"]) for s in out],
+                         [("SPEAKER_01", "je t'explique en"), ("SPEAKER_00", "fait c'est simple")])
+        self.assertEqual((out[1]["start"], out[1]["end"]), (2.1, 3.5))
+        self.assertNotIn("words", out[0])
+
+    def test_word_in_short_gap_goes_to_nearest_turn(self):
+        segments = [{"start": 0.0, "end": 3.0, "text": " oui bien sûr", "words": [
+            word(" oui", 0.0, 0.4), word(" bien", 1.0, 1.3), word(" sûr", 2.2, 2.6)]}]
+        diarization = annotation((0, 0.5, "A"), (2.0, 3.0, "B"))
+        out = bridge.split_segments_by_speaker(segments, diarization)
+        # "bien" (1.0-1.3) est entre les deux tours, plus proche de A
+        self.assertEqual([(s["speaker"], s["text"]) for s in out], [("A", "oui bien"), ("B", "sûr")])
+
+    def test_segment_without_words_is_assigned_whole(self):
+        segments = [{"start": 0.0, "end": 4.0, "text": "bonjour"}]
+        out = bridge.split_segments_by_speaker(segments, annotation((0, 4, "A")))
+        self.assertEqual(out[0]["speaker"], "A")
+
+    def test_far_from_any_turn_is_unknown(self):
+        segments = [{"start": 50.0, "end": 51.0, "text": "x", "words": [word(" x", 50.0, 51.0)]}]
+        out = bridge.split_segments_by_speaker(segments, annotation((0, 4, "A")))
+        self.assertEqual(out[0]["speaker"], "Inconnu")
 
 
 class DiarizationPipelineTests(unittest.TestCase):

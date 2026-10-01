@@ -51,6 +51,23 @@ final class MergeSegmentsTests: XCTestCase {
         XCTAssertEqual(merged.count, 3)
     }
 
+    func testLongMonologueIsSplitAtSentenceEndAfterAMinute() {
+        let merged = TranscriptionListVM.mergeConsecutiveSpeakerSegments([
+            result(0, 0, 40, "Première partie.", "A"),
+            result(1, 40, 65, "Encore un peu", "A"),      // 65 s mais pas de fin de phrase
+            result(2, 65, 70, "et voilà.", "A"),          // fin de phrase apres 60 s
+            result(3, 70, 80, "Nouveau paragraphe.", "A"),
+        ])
+        XCTAssertEqual(merged.map(\.text), ["Première partie. Encore un peu et voilà.", "Nouveau paragraphe."])
+    }
+
+    func testHardLimitWithoutPunctuation() {
+        let segments = (0..<10).map { result($0, Double($0) * 30, Double($0 + 1) * 30, "sans ponctuation", "A") }
+        let merged = TranscriptionListVM.mergeConsecutiveSpeakerSegments(segments)
+        XCTAssertEqual(merged.count, 2)
+        XCTAssertEqual(merged[0].end, 180)
+    }
+
     func testAlternatingSpeakersAreNotMerged() {
         let merged = TranscriptionListVM.mergeConsecutiveSpeakerSegments([
             result(0, 0, 1, "a", "A"), result(1, 1, 2, "b", "B"), result(2, 2, 3, "c", "A"),
@@ -270,5 +287,77 @@ final class HuggingFaceTokenTests: XCTestCase {
         HuggingFaceToken.migrateFromUserDefaults()
         XCTAssertEqual(HuggingFaceToken.value, "hf_keychain")
         XCTAssertNil(suite.string(forKey: "hf_token"))
+    }
+}
+
+// MARK: - Base de voix
+
+final class VoiceGalleryTests: XCTestCase {
+    private func sample(_ value: Double, _ source: String? = nil) -> VoiceSample {
+        VoiceSample(embedding: [value, 0], source: source, added: nil)
+    }
+
+    func testDecodesV1AsOneSamplePerPerson() {
+        let gallery = VoiceGallery.decode(Data(#"{"Pierre":[0.1,0.2],"Olivier":[0.3,0.4]}"#.utf8))
+        XCTAssertEqual(gallery.speakers["Pierre"]?.map(\.embedding), [[0.1, 0.2]])
+        XCTAssertEqual(gallery.speakers.count, 2)
+    }
+
+    func testV2RoundTrip() throws {
+        var gallery = VoiceGallery()
+        gallery.add(VoiceSample(embedding: [1, 2], source: "p:SPEAKER_00", added: Date(timeIntervalSince1970: 0)),
+                    to: "Pierre", limit: 10)
+        let decoded = VoiceGallery.decode(try gallery.encoded())
+        XCTAssertEqual(decoded, gallery)
+        let json = String(decoding: try gallery.encoded(), as: UTF8.self)
+        XCTAssertTrue(json.contains(#""version":2"#))
+    }
+
+    func testAddKeepsMostRecentSamples() {
+        var gallery = VoiceGallery()
+        for i in 0..<5 { gallery.add(sample(Double(i)), to: "Pierre", limit: 3) }
+        XCTAssertEqual(gallery.speakers["Pierre"]?.map { $0.embedding[0] }, [2, 3, 4])
+    }
+
+    func testRemoveSamplesBySourceMovesRename() {
+        var gallery = VoiceGallery()
+        gallery.add(sample(1, "p1:SPEAKER_00"), to: "Pierre", limit: 10)
+        gallery.add(sample(2, "p2:SPEAKER_01"), to: "Pierre", limit: 10)
+        gallery.add(sample(3, "p1:SPEAKER_01"), to: "Hugo", limit: 10)
+        gallery.removeSamples(source: "p1:SPEAKER_00")
+        XCTAssertEqual(gallery.speakers["Pierre"]?.count, 1)
+        gallery.removeSamples(source: "p1:SPEAKER_01")
+        XCTAssertNil(gallery.speakers["Hugo"], "une personne sans empreinte disparait")
+    }
+
+    func testInvalidDataGivesEmptyGallery() {
+        XCTAssertTrue(VoiceGallery.decode(Data("not json".utf8)).speakers.isEmpty)
+    }
+}
+
+// MARK: - Reprise des transcriptions interrompues
+
+@MainActor
+final class ResumeInterruptedTests: XCTestCase {
+    func testInterruptedProjectWithMissingAudioIsMarkedFailed() throws {
+        let container = try ModelContainer(
+            for: TranscriptionProject.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        let project = TranscriptionProject.create(audioURL: URL(fileURLWithPath: "/tmp/voxa-missing-\(UUID()).m4a"))
+        project.status = .diarizing
+        context.insert(project)
+        let done = TranscriptionProject.create(audioURL: URL(fileURLWithPath: "/tmp/other.m4a"))
+        done.status = .completed
+        context.insert(done)
+
+        let listVM = TranscriptionListVM()
+        listVM.resumeInterrupted(modelContext: context)
+
+        XCTAssertEqual(project.status, .failed)
+        XCTAssertNotNil(project.errorMessage)
+        XCTAssertEqual(done.status, .completed)
+        XCTAssertTrue(listVM.batchQueue.isEmpty)
     }
 }

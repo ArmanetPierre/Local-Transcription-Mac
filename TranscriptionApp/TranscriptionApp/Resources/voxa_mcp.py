@@ -213,7 +213,9 @@ TOOLS = [
     },
     {
         "name": "get_transcription_status",
-        "description": "Get status, progress, duration and speakers of a transcription.",
+        "description": "Get status, progress, duration and speakers of a transcription. Speakers named by "
+                       "automatic voice recognition have recognized_automatically=true and a recognition_score "
+                       "(cosine similarity, 0-1; below ~0.75 ask the user to confirm).",
         "inputSchema": {"type": "object", "properties": {"id": ID_PROP}, "required": ["id"]},
         "handler": tool_get_transcription_status,
         "annotations": {"readOnlyHint": True},
@@ -253,7 +255,8 @@ TOOLS = [
     {
         "name": "rename_speakers",
         "description": "Give real names to speaker labels, e.g. {\"SPEAKER_00\": \"Olivier\"}. "
-                       "Names are saved in Voxa and their voices are remembered for future recognition. "
+                       "Names are saved in Voxa and their voices are remembered for future recognition "
+                       "(also use it to confirm a name Voxa recognized automatically: it adds a voice sample). "
                        "Only do this with names the user confirmed.",
         "inputSchema": {
             "type": "object",
@@ -299,7 +302,9 @@ TOOLS = [
     },
     {
         "name": "list_known_speakers",
-        "description": "List people whose voice Voxa already knows (recognized automatically in new transcriptions).",
+        "description": "List people whose voice Voxa already knows (recognized automatically in new transcriptions), "
+                       "with the number of voice samples kept for each (one per transcription where they were named; "
+                       "more samples = better recognition across recording setups).",
         "inputSchema": {"type": "object", "properties": {}},
         "handler": tool_list_known_speakers,
         "annotations": {"readOnlyHint": True},
@@ -318,7 +323,9 @@ REPORT_PROMPT = """Fais le compte rendu de la reunion {target} avec les outils V
 1. Si c'est un fichier, lance transcribe_file puis wait_for_transcription jusqu'a la fin.
 2. Lis le transcript complet avec get_transcript (suis next_offset s'il y en a).
 3. Si des intervenants sont encore SPEAKER_XX, propose-moi qui est qui (avec un extrait
-   de chacun) et attends ma confirmation avant d'appeler rename_speakers.
+   de chacun) et attends ma confirmation avant d'appeler rename_speakers. Les noms
+   reconnus automatiquement avec un recognition_score sous 0.75 sont a confirmer aussi ;
+   au-dessus, mentionne-les simplement.
 4. Redige le compte rendu en Markdown, dans la langue de la reunion :
    - Contexte et participants
    - Points discutes (resume par sujet)

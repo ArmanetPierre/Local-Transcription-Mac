@@ -70,8 +70,34 @@ class EvaluateRecognitionTests(unittest.TestCase):
                "segments": [seg(0, 5, "S0", "a"), seg(5, 10, "S1", "b")]}
         result = {"segments": [seg(0, 5, "H1", "a"), seg(5, 10, "H0", "b")],
                   "speaker_matches": {"H1": "Olivier", "H0": "Marie"}}
-        row = bench.evaluate(ref, result, {}, 1.0)
-        self.assertEqual(row["recognition"], {"correct": 1, "expected": 2, "wrong": 1})
+        gallery = {"Olivier": [[1.0, 0.0]], "Pierre": [[0.0, 1.0]]}
+        result["speaker_embeddings"] = {"H1": [1.0, 0.1], "H0": [0.1, 1.0]}
+        rec = bench.evaluate(ref, result, {}, 1.0, gallery)["recognition"]
+        self.assertEqual((rec["correct"], rec["expected"], rec["wrong"]), (1, 2, 1))
+        self.assertEqual(rec["details"]["H0"]["truth"], "Pierre")
+        self.assertGreater(rec["details"]["H0"]["score_truth"], 0.9)
+
+    def test_unknown_voices_are_not_expected(self):
+        ref = {"id": "r", "duration_sec": 10, "role": "recognize",
+               "speaker_names": {"S0": "Olivier", "S1": "Moh"},
+               "segments": [seg(0, 5, "S0", "a"), seg(5, 10, "S1", "b")]}
+        result = {"segments": [seg(0, 5, "H0", "a"), seg(5, 10, "H1", "b")],
+                  "speaker_matches": {"H0": "Olivier"}}
+        rec = bench.evaluate(ref, result, {}, 1.0, {"Olivier": [[1.0]]})["recognition"]
+        self.assertEqual((rec["correct"], rec["expected"], rec["wrong"]), (1, 1, 0))
+
+
+class GalleryTests(unittest.TestCase):
+    def test_enroll_multi_appends_and_single_replaces(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "gallery.json")
+            result = {"speaker_embeddings": {"H0": [1.0, 0.0]}}
+            bench.enroll(path, "a", result, {"H0": "S0"}, {"S0": "Pierre"}, "multi")
+            bench.enroll(path, "b", result, {"H0": "S0"}, {"S0": "Pierre"}, "multi")
+            self.assertEqual(len(bench.load_gallery(path)["Pierre"]), 2)
+            bench.enroll(path, "c", result, {"H0": "S0"}, {"S0": "Pierre"}, "single")
+            self.assertEqual(len(bench.load_gallery(path)["Pierre"]), 1)
 
 
 if __name__ == "__main__":

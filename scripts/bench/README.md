@@ -5,6 +5,7 @@
 | Colonne | Signification |
 |---|---|
 | **WER** | Taux d'erreur sur les mots par rapport au texte de référence (texte normalisé : minuscules, sans ponctuation) |
+| **Mots** | Nombre de mots produits / nombre de mots de la référence (bien en dessous de 100 % : passages sautés) |
 | **Spk err** | Part du temps de parole attribuée au mauvais intervenant, après appariement optimal des étiquettes `SPEAKER_XX` |
 | **Nb spk** | Intervenants trouvés / attendus |
 | **Reconnus** | Intervenants nommés automatiquement à juste titre (voir « Reconnaissance » ci-dessous) |

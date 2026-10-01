@@ -94,6 +94,8 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            KnownVoicesSection()
+
             Section("Claude Code (MCP)") {
                 Text("Let Claude Code transcribe your meetings, read transcripts and write meeting reports in Voxa. Run this command once in a terminal:")
                     .font(.caption)

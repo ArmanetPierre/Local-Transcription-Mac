@@ -166,18 +166,44 @@ def run_bridge(bridge, audio, language, embeddings_file, log_path):
     return result, steps, elapsed
 
 
-def enroll(gallery_path, result, mapping, names):
-    """Simule la confirmation des noms par l'utilisateur : ajoute les voix a la base du banc."""
-    gallery = {}
+def load_gallery(gallery_path):
+    """Base de voix du banc, au format v2 de Voxa : {nom: [empreinte, ...]}."""
+    if not os.path.exists(gallery_path):
+        return {}
+    with open(gallery_path) as f:
+        data = json.load(f)
+    if data.get("version") != 2:  # anciens runs : {nom: empreinte}
+        return {name: [vector] for name, vector in data.items()}
+    return {name: [s["embedding"] for s in samples] for name, samples in data.get("speakers", {}).items()}
+
+
+def enroll(gallery_path, item_id, result, mapping, names, mode):
+    """Simule la confirmation des noms par l'utilisateur : ajoute les voix a la base du banc.
+
+    mode "multi" : une empreinte de plus par contexte (Voxa >= 1.5)
+    mode "single" : la nouvelle empreinte remplace l'ancienne (Voxa <= 1.4)
+    """
+    data = {"version": 2, "speakers": {}}
     if os.path.exists(gallery_path):
         with open(gallery_path) as f:
-            gallery = json.load(f)
+            data = json.load(f)
     for hyp_label, embedding in (result.get("speaker_embeddings") or {}).items():
         name = names.get(mapping.get(hyp_label, ""))
-        if name:
-            gallery[name] = embedding
+        if not name:
+            continue
+        sample = {"embedding": embedding, "source": "%s:%s" % (item_id, hyp_label)}
+        if mode == "single":
+            data["speakers"][name] = [sample]
+        else:
+            data["speakers"].setdefault(name, []).append(sample)
     with open(gallery_path, "w") as f:
-        json.dump(gallery, f)
+        json.dump(data, f)
+
+
+def cosine(a, b):
+    a, b = np.asarray(a, dtype=np.float32), np.asarray(b, dtype=np.float32)
+    denom = float(np.linalg.norm(a) * np.linalg.norm(b))
+    return float(np.dot(a, b)) / denom if denom else 0.0
 
 
 # --------------------------------------------------------------------------
@@ -200,7 +226,7 @@ def load_items(bench_dir, only):
     return items
 
 
-def evaluate(ref, result, steps, elapsed):
+def evaluate(ref, result, steps, elapsed, gallery=None):
     hyp = result["segments"]
     duration = ref["duration_sec"]
     mapping, spk_err = speaker_mapping(ref["segments"], hyp, duration)
@@ -211,15 +237,34 @@ def evaluate(ref, result, steps, elapsed):
     matches = result.get("speaker_matches") or {}
     recognition = None
     if names and ref.get("role") == "recognize":
-        expected = {h: names[r] for h, r in mapping.items() if r in names}
+        gallery = gallery or {}
+        truth = {h: names[r] for h, r in mapping.items() if r in names}
+        # On ne peut reconnaitre que les voix deja apprises
+        expected = {h: n for h, n in truth.items() if n in gallery}
         correct = sum(1 for h, name in expected.items() if matches.get(h) == name)
-        wrong = sum(1 for h, name in matches.items() if expected.get(h) not in (None, name))
-        recognition = {"correct": correct, "expected": len(expected), "wrong": wrong}
+        wrong = sum(1 for h, name in matches.items() if truth.get(h) != name)
+        # Diagnostic : score de la bonne personne et meilleur score d'une mauvaise
+        embeddings = result.get("speaker_embeddings") or {}
+        details = {}
+        for h, emb in embeddings.items():
+            scores = {n: max(cosine(emb, s) for s in samples) for n, samples in gallery.items()}
+            right = truth.get(h)
+            details[h] = {
+                "truth": right,
+                "matched": matches.get(h),
+                "score_truth": round(scores[right], 3) if right in scores else None,
+                "best_other": round(max([v for n, v in scores.items() if n != right] or [0]), 3),
+            }
+        recognition = {"correct": correct, "expected": len(expected), "wrong": wrong,
+                       "known": sorted(gallery), "details": details}
 
+    ref_words = len(normalize_words(" ".join(s["text"] for s in ref["segments"])))
+    hyp_words = len(normalize_words(" ".join(s["text"] for s in hyp)))
     return {
         "id": ref["id"],
         "duration_sec": duration,
         "wer": wer(ref["segments"], hyp),
+        "words_ratio": hyp_words / ref_words if ref_words else None,
         "speaker_error": spk_err,
         "speakers_found": len(hyp_speakers),
         "speakers_expected": len(ref_speakers),
@@ -244,19 +289,21 @@ def fmt_recognition(r):
 
 def print_table(rows, title):
     print("\n### " + title + "\n")
-    print("| Extrait | Durée | WER | Spk err | Nb spk | Reconnus | RTF |")
-    print("|---|---|---|---|---|---|---|")
+    print("| Extrait | Durée | WER | Mots | Spk err | Nb spk | Reconnus | RTF |")
+    print("|---|---|---|---|---|---|---|---|")
     for r in rows:
-        print("| %s | %d min | %s | %s | %d/%d | %s | %.3f |" % (
-            r["id"], round(r["duration_sec"] / 60), fmt_pct(r["wer"]), fmt_pct(r["speaker_error"]),
+        print("| %s | %d min | %s | %s | %s | %d/%d | %s | %.3f |" % (
+            r["id"], round(r["duration_sec"] / 60), fmt_pct(r["wer"]), fmt_pct(r.get("words_ratio")),
+            fmt_pct(r["speaker_error"]),
             r["speakers_found"], r["speakers_expected"], fmt_recognition(r["recognition"]), r["rtf"]))
     total = sum(r["duration_sec"] for r in rows)
     if total:
         def weighted(key):
-            vals = [(r[key], r["duration_sec"]) for r in rows if r[key] is not None]
+            vals = [(r.get(key), r["duration_sec"]) for r in rows if r.get(key) is not None]
             return sum(v * d for v, d in vals) / sum(d for _, d in vals) if vals else None
-        print("| **Total (pondéré)** | %d min | %s | %s | | | %.3f |" % (
-            round(total / 60), fmt_pct(weighted("wer")), fmt_pct(weighted("speaker_error")),
+        print("| **Total (pondéré)** | %d min | %s | %s | %s | | | %.3f |" % (
+            round(total / 60), fmt_pct(weighted("wer")), fmt_pct(weighted("words_ratio")),
+            fmt_pct(weighted("speaker_error")),
             sum(r["elapsed_sec"] for r in rows) / total))
 
 
@@ -277,10 +324,10 @@ def run(args):
             os.path.join(run_dir, ref["id"] + ".log"))
         with open(os.path.join(run_dir, ref["id"] + ".json"), "w") as f:
             json.dump(result, f, ensure_ascii=False)
-        row = evaluate(ref, result, steps, elapsed)
+        row = evaluate(ref, result, steps, elapsed, load_gallery(gallery))
         rows.append(row)
         if ref.get("role") == "enroll" and ref.get("speaker_names"):
-            enroll(gallery, result, row["mapping"], ref["speaker_names"])
+            enroll(gallery, ref["id"], result, row["mapping"], ref["speaker_names"], args.gallery_mode)
 
     summary = {"label": args.label, "bridge": args.bridge, "date": time.strftime("%Y-%m-%d %H:%M"), "items": rows}
     with open(os.path.join(run_dir, "summary.json"), "w") as f:
@@ -299,7 +346,11 @@ def rescore(args):
         with open(os.path.join(run_dir, ref["id"] + ".json")) as f:
             result = json.load(f)
         old = previous[ref["id"]]
-        rows.append(evaluate(ref, result, old["steps"], old["elapsed_sec"]))
+        gallery = load_gallery(os.path.join(run_dir, "gallery.json"))
+        known = (old.get("recognition") or {}).get("known")
+        if known is not None:
+            gallery = {n: samples for n, samples in gallery.items() if n in known}
+        rows.append(evaluate(ref, result, old["steps"], old["elapsed_sec"], gallery))
     summary["items"] = rows
     with open(os.path.join(run_dir, "summary.json"), "w") as f:
         json.dump(summary, f, ensure_ascii=False, indent=1)
@@ -322,6 +373,8 @@ def main():
     parser.add_argument("--bridge", default=DEFAULT_BRIDGE, help="Script de transcription a tester")
     parser.add_argument("--bench-dir", default=DEFAULT_BENCH)
     parser.add_argument("--compare", nargs="+", metavar="LABEL", help="Afficher des runs deja faits")
+    parser.add_argument("--gallery-mode", choices=["multi", "single"], default="multi",
+                        help="multi : plusieurs empreintes par personne ; single : comportement Voxa <= 1.4")
     parser.add_argument("--rescore", metavar="LABEL", help="Recalculer les metriques d'un run sans relancer les modeles")
     args = parser.parse_args()
     if args.compare:
