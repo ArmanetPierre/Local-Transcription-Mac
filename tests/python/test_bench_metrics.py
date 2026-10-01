@@ -26,6 +26,16 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(bench.normalize_words("peut-être"), ["peut", "être"])
 
 
+class TextQualityTests(unittest.TestCase):
+    def test_punctuation_rate(self):
+        self.assertAlmostEqual(bench.punctuation_rate([seg(0, 1, "A", "Oui. Non ? Peut-être")]), 200 / 4)
+        self.assertEqual(bench.punctuation_rate([seg(0, 1, "A", "sans ponctuation du tout")]), 0)
+
+    def test_max_repeat(self):
+        self.assertEqual(bench.max_repeat([seg(0, 1, "A", "ok ok ok ok ok ok ok")]), 4)
+        self.assertEqual(bench.max_repeat([seg(0, 1, "A", "une phrase normale sans boucle")]), 1)
+
+
 class WerTests(unittest.TestCase):
     def test_identical(self):
         self.assertEqual(bench.wer([seg(0, 1, "A", "bonjour à tous")], [seg(0, 1, "B", "Bonjour à tous.")]), 0)

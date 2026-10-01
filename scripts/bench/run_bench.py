@@ -62,6 +62,23 @@ def normalize_words(text):
     return [w for w in text.split() if w not in FILLERS]
 
 
+def punctuation_rate(segments):
+    """Signes de fin de phrase pour 100 mots (0 : texte sans ponctuation)."""
+    text = " ".join(s["text"] for s in segments)
+    words = len(text.split())
+    return 100.0 * len(re.findall(r"[.?!…]", text)) / words if words else None
+
+
+def max_repeat(segments, n=4):
+    """Nombre de repetitions du groupe de n mots le plus repete (hallucinations en boucle)."""
+    words = normalize_words(" ".join(s["text"] for s in segments))
+    counts = {}
+    for i in range(len(words) - n + 1):
+        key = tuple(words[i:i + n])
+        counts[key] = counts.get(key, 0) + 1
+    return max(counts.values()) if counts else 0
+
+
 def word_errors(ref, hyp):
     """Distance d'edition (substitutions + insertions + suppressions) entre listes de mots."""
     previous = list(range(len(hyp) + 1))
@@ -265,6 +282,8 @@ def evaluate(ref, result, steps, elapsed, gallery=None):
         "duration_sec": duration,
         "wer": wer(ref["segments"], hyp),
         "words_ratio": hyp_words / ref_words if ref_words else None,
+        "punctuation": punctuation_rate(hyp),
+        "max_repeat": max_repeat(hyp),
         "speaker_error": spk_err,
         "speakers_found": len(hyp_speakers),
         "speakers_expected": len(ref_speakers),
@@ -289,11 +308,13 @@ def fmt_recognition(r):
 
 def print_table(rows, title):
     print("\n### " + title + "\n")
-    print("| Extrait | Durée | WER | Mots | Spk err | Nb spk | Reconnus | RTF |")
-    print("|---|---|---|---|---|---|---|---|")
+    print("| Extrait | Durée | WER | Mots | Ponct. | Répét. | Spk err | Nb spk | Reconnus | RTF |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
     for r in rows:
-        print("| %s | %d min | %s | %s | %s | %d/%d | %s | %.3f |" % (
+        punct = r.get("punctuation")
+        print("| %s | %d min | %s | %s | %s | %s | %s | %d/%d | %s | %.3f |" % (
             r["id"], round(r["duration_sec"] / 60), fmt_pct(r["wer"]), fmt_pct(r.get("words_ratio")),
+            "—" if punct is None else "%.1f" % punct, r.get("max_repeat", "—"),
             fmt_pct(r["speaker_error"]),
             r["speakers_found"], r["speakers_expected"], fmt_recognition(r["recognition"]), r["rtf"]))
     total = sum(r["duration_sec"] for r in rows)
@@ -301,8 +322,9 @@ def print_table(rows, title):
         def weighted(key):
             vals = [(r.get(key), r["duration_sec"]) for r in rows if r.get(key) is not None]
             return sum(v * d for v, d in vals) / sum(d for _, d in vals) if vals else None
-        print("| **Total (pondéré)** | %d min | %s | %s | %s | | | %.3f |" % (
+        print("| **Total (pondéré)** | %d min | %s | %s | %s | | %s | | | %.3f |" % (
             round(total / 60), fmt_pct(weighted("wer")), fmt_pct(weighted("words_ratio")),
+            "—" if weighted("punctuation") is None else "%.1f" % weighted("punctuation"),
             fmt_pct(weighted("speaker_error")),
             sum(r["elapsed_sec"] for r in rows) / total))
 

@@ -6,6 +6,8 @@
 |---|---|
 | **WER** | Taux d'erreur sur les mots par rapport au texte de référence (texte normalisé : minuscules, sans ponctuation) |
 | **Mots** | Nombre de mots produits / nombre de mots de la référence (bien en dessous de 100 % : passages sautés) |
+| **Ponct.** | Signes de fin de phrase pour 100 mots (proche de 0 : Whisper a perdu la ponctuation) |
+| **Répét.** | Répétitions du groupe de 4 mots le plus répété (élevé : hallucination en boucle) |
 | **Spk err** | Part du temps de parole attribuée au mauvais intervenant, après appariement optimal des étiquettes `SPEAKER_XX` |
 | **Nb spk** | Intervenants trouvés / attendus |
 | **Reconnus** | Intervenants nommés automatiquement à juste titre (voir « Reconnaissance » ci-dessous) |

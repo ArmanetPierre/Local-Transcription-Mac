@@ -14,7 +14,7 @@ Native macOS application (SwiftUI) for audio transcription with speaker identifi
 - **Meeting recording** with system audio + microphone capture (ScreenCaptureKit)
 - **Speaker summaries** and **meeting reports** via [Ollama](https://ollama.com) (local LLM)
 - **Claude Code integration (MCP)** — transcribe meetings, read transcripts and write meeting reports from Claude Code
-- **Automatic speaker recognition** — known voices are named automatically in new transcriptions
+- **Automatic speaker recognition** — known voices are named automatically in new transcriptions, across recording setups (meeting room, video call...)
 - **Export** to TXT, JSON, SRT, Markdown
 - **Menu bar** with real-time progress tracking
 - **Built-in audio player** with segment navigation
@@ -81,9 +81,15 @@ If the selected model is missing, Voxa asks before downloading it (several GB). 
 
 1. **Drag** an audio file into the import zone (or use File → Import)
 2. **Transcription** starts automatically (progress shown in menu bar)
-3. Once complete, **identify speakers** by giving them names
+3. Once complete, **identify speakers** by giving them names (known voices are pre-filled)
 4. **Generate summaries** with Ollama (brain icon)
 5. **Export** the result in your preferred format
+
+### Speaker recognition
+
+Each time you name the speakers of a transcription, Voxa keeps a voice sample for each person (up to 10 per person, one per transcription). A new transcription is compared with all samples, so a person recorded in a meeting room is still recognized on a video call once both contexts are known. Speakers are assigned word by word, so an interruption in the middle of a sentence goes to the right person.
+
+Manage known people in **Settings → Known Voices**: rename, merge (rename to an existing name) or forget a voice.
 
 ### Meeting Recording
 
