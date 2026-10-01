@@ -10,13 +10,39 @@ enum HuggingFaceToken {
     /// Ancienne cle UserDefaults (versions <= 1.3.1)
     private static let legacyDefaultsKey = "hf_token"
 
+    /// Lire le Trousseau est lent (dizaines de ms, controles d'acces) :
+    /// le jeton est lu une seule fois puis garde en memoire.
+    private static var cached: String?
+    private static let lock = NSLock()
+
     static var value: String {
-        get { read() ?? "" }
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            if let cached { return cached }
+            let token = read() ?? ""
+            cached = token
+            return token
+        }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            lock.lock()
+            let unchanged = cached == trimmed
+            lock.unlock()
+            guard !unchanged else { return }
             if trimmed.isEmpty { delete() } else { write(trimmed) }
+            lock.lock()
+            cached = trimmed
+            lock.unlock()
             NotificationCenter.default.post(name: didChange, object: nil)
         }
+    }
+
+    /// Oublier la valeur en memoire (tests)
+    static func resetCache() {
+        lock.lock()
+        cached = nil
+        lock.unlock()
     }
 
     static var isSet: Bool { !value.isEmpty }
@@ -28,6 +54,7 @@ enum HuggingFaceToken {
         guard let legacy = defaults.string(forKey: legacyDefaultsKey) else { return }
         if !legacy.isEmpty && read() == nil {
             write(legacy)
+            resetCache()
         }
         // Ne supprimer l'ancienne valeur qu'une fois le Trousseau a jour
         if legacy.isEmpty || read() != nil {

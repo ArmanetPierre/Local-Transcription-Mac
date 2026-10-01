@@ -2,17 +2,11 @@ import Sparkle
 import SwiftUI
 
 struct SettingsView: View {
-    private let updater: SPUUpdater
+    /// Updater de l'app (deja demarre). SwiftUI recree cette vue a chaque
+    /// rafraichissement de l'app : rien de couteux ne doit etre fait dans init.
+    let updater: SPUUpdater
 
-    init() {
-        self.updater = SPUStandardUpdaterController(
-            startingUpdater: false,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        ).updater
-    }
-
-    @State private var hfToken = HuggingFaceToken.value
+    @State private var hfToken = ""
     @AppStorage("default_model") private var defaultModel = WhisperModel.largeV3Turbo.rawValue
     @AppStorage("python_path") private var pythonPath = PythonBridge.defaultPythonPath
     @AppStorage("script_path") private var scriptPath = PythonBridge.defaultScriptPath
@@ -191,6 +185,7 @@ struct SettingsView: View {
         .frame(width: 500)
         .padding()
         .onAppear {
+            hfToken = HuggingFaceToken.value
             checkOllama()
         }
     }

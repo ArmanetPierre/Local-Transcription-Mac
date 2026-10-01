@@ -4,7 +4,7 @@ struct SetupView: View {
     @Bindable var manager: DependencyManager
     var onComplete: () -> Void
 
-    @State private var hfToken = HuggingFaceToken.value
+    @State private var hfToken = ""
     @State private var isScrolledToBottom = false
 
     var body: some View {
@@ -246,6 +246,7 @@ struct SetupView: View {
         }
         .frame(minWidth: 600, minHeight: 700)
         .task {
+            hfToken = HuggingFaceToken.value
             await manager.checkAll()
         }
     }

@@ -92,7 +92,7 @@ struct TranscriptionApp: App {
         .modelContainer(modelContainer)
 
         Settings {
-            SettingsView()
+            SettingsView(updater: updaterController.updater)
         }
 
         MenuBarExtra {

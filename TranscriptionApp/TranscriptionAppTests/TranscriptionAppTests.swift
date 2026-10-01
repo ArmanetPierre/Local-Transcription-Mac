@@ -231,12 +231,14 @@ final class HuggingFaceTokenTests: XCTestCase {
         HuggingFaceToken.service = "com.pierre.Voxa.tests.\(UUID().uuidString)"
         suite = UserDefaults(suiteName: "VoxaTests.\(UUID().uuidString)")
         HuggingFaceToken.defaults = suite
+        HuggingFaceToken.resetCache()
     }
 
     override func tearDown() {
         HuggingFaceToken.value = ""
         HuggingFaceToken.service = "com.pierre.Voxa"
         HuggingFaceToken.defaults = .standard
+        HuggingFaceToken.resetCache()
     }
 
     func testSetReadAndClear() {
@@ -247,6 +249,12 @@ final class HuggingFaceTokenTests: XCTestCase {
         XCTAssertEqual(HuggingFaceToken.value, "hf_new")
         HuggingFaceToken.value = ""
         XCTAssertFalse(HuggingFaceToken.isSet)
+    }
+
+    func testValueIsReadFromKeychainAfterCacheReset() {
+        HuggingFaceToken.value = "hf_persisted"
+        HuggingFaceToken.resetCache()
+        XCTAssertEqual(HuggingFaceToken.value, "hf_persisted")
     }
 
     func testMigrationMovesLegacyTokenAndRemovesIt() {
