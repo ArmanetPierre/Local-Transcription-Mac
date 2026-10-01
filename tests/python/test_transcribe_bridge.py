@@ -177,6 +177,12 @@ class SplitBySpeakerTests(unittest.TestCase):
         out = bridge.split_segments_by_speaker(segments, annotation((0, 4, "A")))
         self.assertEqual(out[0]["speaker"], "Inconnu")
 
+    def test_short_goodbye_after_last_turn_goes_to_nearest_speaker(self):
+        # "Ciao, ciao." 2 s apres le dernier tour detecte
+        segments = [{"start": 12.0, "end": 12.6, "text": "", "words": [word(" Ciao,", 12.0, 12.3), word(" ciao.", 12.3, 12.6)]}]
+        out = bridge.split_segments_by_speaker(segments, annotation((0, 5, "A"), (6, 10, "B")))
+        self.assertEqual(out[0]["speaker"], "B")
+
 
 def words_of(text, start=0.0):
     return [word(" " + w, start + i * 0.3, start + i * 0.3 + 0.25) for i, w in enumerate(text.split())]

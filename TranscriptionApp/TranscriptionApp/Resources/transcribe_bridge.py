@@ -262,8 +262,9 @@ def load_diarization_pipeline(hf_token, preferred=None):
     raise errors[-1]
 
 
-def _speaker_at(start, end, turns):
-    """Intervenant qui couvre le plus [start, end] ; sinon le tour le plus proche."""
+def _speaker_at(start, end, turns, max_gap=1.0):
+    """Intervenant qui couvre le plus [start, end] ; sinon le tour le plus proche
+    (a moins de max_gap secondes)."""
     best, best_overlap = None, 0.0
     nearest, nearest_gap = None, float("inf")
     for t_start, t_end, speaker in turns:
@@ -276,7 +277,7 @@ def _speaker_at(start, end, turns):
     if best is not None:
         return best
     # Mot entre deux tours de parole (silence, debut de phrase) : tour le plus proche
-    return nearest if nearest_gap <= 1.0 else None
+    return nearest if nearest_gap <= max_gap else None
 
 
 # Boucles d'hallucination de Whisper ("la la la la...", "voila voila voila...")
@@ -414,14 +415,15 @@ def split_segments_by_speaker(segments, diarization):
     for seg in segments:
         words = [w for w in seg.get("words") or [] if w.get("word", "").strip()]
         if not words:
-            speaker = _speaker_at(seg["start"], seg["end"], turns) or "Inconnu"
+            speaker = _speaker_at(seg["start"], seg["end"], turns, max_gap=5.0) or "Inconnu"
             output.append(dict(seg, speaker=speaker))
             continue
         speakers = []
         for w in words:
             spk = _speaker_at(w["start"], w["end"], turns)
             speakers.append(spk if spk is not None else (speakers[-1] if speakers else None))
-        fallback = _speaker_at(seg["start"], seg["end"], turns) or "Inconnu"
+        # Segment entier hors des tours detectes (ex. "Ciao, ciao." en fin d'appel)
+        fallback = _speaker_at(seg["start"], seg["end"], turns, max_gap=5.0) or "Inconnu"
         speakers = [spk or fallback for spk in speakers]
         speakers = smooth_word_speakers(words, speakers)
         for speaker, run_words in _runs(words, speakers):
