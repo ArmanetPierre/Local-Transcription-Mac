@@ -65,3 +65,16 @@ Les références actuelles ont été **produites par la chaîne elle-même** (Wh
 Seule vérité humaine disponible : les **noms** des intervenants de la réunion du 09/03, donnés par l'utilisateur dans Voxa. La réunion est coupée en deux : la première moitié (`enroll`) apprend les voix, la seconde (`recognize`) mesure la reconnaissance automatique.
 
 Corriger à la main quelques minutes de référence (champ `text_reference: "human"`) rendrait le WER absolu.
+
+## Variante Parakeet (expérimentale)
+
+`parakeet_bridge.py` remplace Whisper par NVIDIA Parakeet TDT 0.6B v3 (`parakeet-mlx`) et garde la même diarisation. `parakeet-mlx` est installé **hors du venv de Voxa** :
+
+```bash
+PY="$HOME/Library/Application Support/Voxa/.venv/bin/python"
+"$PY" -m pip install --no-deps --target ~/Projets/voxa-bench/.overlay-parakeet parakeet-mlx==0.5.2 \
+    annotated-doc dacite decorator lazy-loader librosa msgpack platformdirs pooch shellingham soxr typer
+PYTHONPATH=~/Projets/voxa-bench/.overlay-parakeet "$PY" scripts/bench/run_bench.py --label parakeet --bridge scripts/bench/parakeet_bridge.py
+```
+
+Résultat (octobre 2026) : comparable à Whisper sur la réunion en anglais, mais inutilisable sur les réunions en français (40 à 60 % de mots perdus, phrases traduites en anglais). Transcription environ 2,5 fois plus rapide que Whisper sur Mac.
