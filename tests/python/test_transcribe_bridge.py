@@ -137,12 +137,35 @@ class SplitBySpeakerTests(unittest.TestCase):
         self.assertNotIn("words", out[0])
 
     def test_word_in_short_gap_goes_to_nearest_turn(self):
-        segments = [{"start": 0.0, "end": 3.0, "text": " oui bien sûr", "words": [
-            word(" oui", 0.0, 0.4), word(" bien", 1.0, 1.3), word(" sûr", 2.2, 2.6)]}]
-        diarization = annotation((0, 0.5, "A"), (2.0, 3.0, "B"))
+        segments = [{"start": 0.0, "end": 6.0, "text": "", "words": [
+            word(" oui", 0.0, 0.4), word(" tout", 0.5, 0.8), word(" à", 0.9, 1.0), word(" fait", 1.6, 2.0),
+            word(" mais", 3.0, 3.3), word(" pas", 3.4, 3.7), word(" ici.", 3.8, 4.6)]}]
+        diarization = annotation((0, 1.2, "A"), (2.6, 6.0, "B"))
         out = bridge.split_segments_by_speaker(segments, diarization)
-        # "bien" (1.0-1.3) est entre les deux tours, plus proche de A
-        self.assertEqual([(s["speaker"], s["text"]) for s in out], [("A", "oui bien"), ("B", "sûr")])
+        # "fait" (1.6-2.0) tombe dans le silence, plus pres de A
+        self.assertEqual([(s["speaker"], s["text"]) for s in out],
+                         [("A", "oui tout à fait"), ("B", "mais pas ici.")])
+
+    def test_isolated_word_stays_in_its_sentence(self):
+        # "La reserve legale, c'est 5% du benefice | dans | la limite de 10% du capital."
+        words = [word(w, i * 0.4, i * 0.4 + 0.35) for i, w in enumerate(
+            " La réserve légale, c'est 5% du bénéfice dans la limite de 10% du capital.".split(" ")[1:])]
+        for w in words:
+            w["word"] = " " + w["word"]
+        diarization = annotation((0, 2.75, "S2"), (2.8, 3.15, "S1"), (3.2, 10, "S2"))
+        out = bridge.split_segments_by_speaker([{"start": 0, "end": 6, "text": "", "words": words}], diarization)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["speaker"], "S2")
+
+    def test_first_word_of_new_sentence_follows_the_sentence(self):
+        # "...on fait le capital. Et | on l'a aussi dans les documents" : "Et" ouvre la phrase de S2
+        texts = [" Le", " capital", " social.", " Et", " on", " l'a", " aussi", " dans", " les", " documents."]
+        words = [word(w, i * 0.5, i * 0.5 + 0.45) for i, w in enumerate(texts)]
+        diarization = annotation((0, 1.9, "S1"), (1.95, 2.0, "S1"), (2.0, 2.4, "S1"), (2.45, 6, "S2"))
+        # "Et" (1.5-1.95) est encore dans le tour de S1
+        out = bridge.split_segments_by_speaker([{"start": 0, "end": 5, "text": "", "words": words}], diarization)
+        self.assertEqual([(s["speaker"], s["text"]) for s in out],
+                         [("S1", "Le capital social."), ("S2", "Et on l'a aussi dans les documents.")])
 
     def test_segment_without_words_is_assigned_whole(self):
         segments = [{"start": 0.0, "end": 4.0, "text": "bonjour"}]
@@ -153,6 +176,35 @@ class SplitBySpeakerTests(unittest.TestCase):
         segments = [{"start": 50.0, "end": 51.0, "text": "x", "words": [word(" x", 50.0, 51.0)]}]
         out = bridge.split_segments_by_speaker(segments, annotation((0, 4, "A")))
         self.assertEqual(out[0]["speaker"], "Inconnu")
+
+
+def words_of(text, start=0.0):
+    return [word(" " + w, start + i * 0.3, start + i * 0.3 + 0.25) for i, w in enumerate(text.split())]
+
+
+class HallucinationLoopTests(unittest.TestCase):
+    def test_single_word_loop_collapsed(self):
+        kept = bridge.collapse_repetitions(words_of("pour le fnb " + "la " * 60 + "et voilà"))
+        self.assertEqual(" ".join(w["word"].strip() for w in kept), "pour le fnb la et voilà")
+
+    def test_phrase_loop_collapsed(self):
+        kept = bridge.collapse_repetitions(words_of("ok on y va " * 6 + "fin"))
+        self.assertEqual(" ".join(w["word"].strip() for w in kept), "ok on y va fin")
+
+    def test_natural_repetition_kept(self):
+        text = "non non non je ne pense pas"
+        kept = bridge.collapse_repetitions(words_of(text))
+        self.assertEqual(" ".join(w["word"].strip() for w in kept), text)
+
+    def test_punctuation_and_case_ignored(self):
+        kept = bridge.collapse_repetitions(words_of("Voilà, voilà. voilà voilà voilà ok"))
+        self.assertEqual(len(kept), 2)
+
+    def test_segment_text_rebuilt(self):
+        segs = [{"start": 0, "end": 30, "text": "x", "words": words_of("bon " + "la " * 10)}]
+        out = bridge.remove_hallucination_loops(segs)
+        self.assertEqual(out[0]["text"].strip(), "bon la")
+        self.assertAlmostEqual(out[0]["end"], 0.55)
 
 
 class DiarizationPipelineTests(unittest.TestCase):

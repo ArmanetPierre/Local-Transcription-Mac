@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import re
 import tempfile
 import time
 import warnings
@@ -278,9 +279,131 @@ def _speaker_at(start, end, turns):
     return nearest if nearest_gap <= 1.0 else None
 
 
+# Boucles d'hallucination de Whisper ("la la la la...", "voila voila voila...")
+MAX_REPEATS = 3
+
+
+def _norm(word):
+    return re.sub(r"[^\w']", "", word.lower())
+
+
+def collapse_repetitions(words, max_ngram=4, max_repeats=MAX_REPEATS):
+    """Retire les repetitions en boucle d'un mot ou groupe de mots (au-dela de
+    max_repeats occurrences consecutives, on n'en garde qu'une).
+    Travaille sur la liste des mots horodates de Whisper."""
+    out = list(words)
+    for n in range(1, max_ngram + 1):
+        i = 0
+        result = []
+        while i < len(out):
+            gram = [_norm(w["word"]) for w in out[i:i + n]]
+            count = 1
+            while i + (count + 1) * n <= len(out) and \
+                    [_norm(w["word"]) for w in out[i + count * n:i + (count + 1) * n]] == gram:
+                count += 1
+            if len(gram) == n and any(gram) and count > max_repeats:
+                result.extend(out[i:i + n])   # une seule occurrence
+                i += count * n
+            else:
+                result.append(out[i])
+                i += 1
+        out = result
+    return out
+
+
+def remove_hallucination_loops(segments):
+    """Applique collapse_repetitions a chaque segment (texte reconstruit depuis les mots)."""
+    removed = 0
+    for seg in segments:
+        words = seg.get("words") or []
+        if not words:
+            continue
+        kept = collapse_repetitions(words)
+        if len(kept) < len(words):
+            removed += len(words) - len(kept)
+            seg["words"] = kept
+            seg["text"] = "".join(w["word"] for w in kept)
+            seg["end"] = kept[-1]["end"]
+    if removed:
+        log(f"Boucles d'hallucination retirees : {removed} mots")
+    return segments
+
+
+# Lissage de l'attribution mot par mot : les frontieres de la diarisation et
+# l'horodatage des mots ont quelques dixiemes de seconde d'imprecision, ce qui
+# fait basculer des mots isoles ("dans", "Et", "Ca") chez le mauvais intervenant.
+MIN_TURN_WORDS = 3
+MIN_TURN_SECONDS = 1.0
+SNAP_WORDS = 2          # distance max (en mots) pour recaler une coupure sur la ponctuation
+SENTENCE_END = (".", "?", "!", "…", ",", ";", ":")
+
+
+def _runs(words, speakers):
+    """Regroupe des mots consecutifs du meme intervenant : [[speaker, [mots]], ...]."""
+    runs = []
+    for w, spk in zip(words, speakers):
+        if runs and runs[-1][0] == spk:
+            runs[-1][1].append(w)
+        else:
+            runs.append([spk, [w]])
+    return runs
+
+
+def _is_short(run):
+    words = run[1]
+    return len(words) < MIN_TURN_WORDS or (words[-1]["end"] - words[0]["start"]) < MIN_TURN_SECONDS
+
+
+def smooth_word_speakers(words, speakers):
+    """Supprime les micro-tours et recale les coupures sur la ponctuation."""
+    runs = _runs(words, speakers)
+    # 1. Les tours trop courts rejoignent un voisin
+    changed = True
+    while changed and len(runs) > 1:
+        changed = False
+        for i, run in enumerate(runs):
+            if not _is_short(run):
+                continue
+            prev = runs[i - 1] if i > 0 else None
+            nxt = runs[i + 1] if i + 1 < len(runs) else None
+            if prev and nxt and prev[0] == nxt[0]:
+                target = prev
+            elif prev and prev[1][-1]["word"].strip().endswith(SENTENCE_END):
+                target = nxt or prev          # la phrase precedente est finie : debut de la suivante
+            elif prev:
+                target = prev                 # fin de la phrase de l'intervenant precedent
+            else:
+                target = nxt
+            run[0] = target[0]
+            runs = _runs([w for r in runs for w in r[1]], [r[0] for r in runs for _ in r[1]])
+            changed = True
+            break
+    labels = [r[0] for r in runs for _ in r[1]]
+    # 2. Recaler chaque coupure sur la ponctuation la plus proche
+    for i in range(1, len(labels)):
+        if labels[i] == labels[i - 1]:
+            continue
+        if words[i - 1]["word"].strip().endswith(SENTENCE_END):
+            continue
+        for k in range(1, SNAP_WORDS + 1):
+            # ponctuation un peu plus loin : les premiers mots du nouveau tour finissent la phrase
+            if i + k - 1 < len(words) and words[i + k - 1]["word"].strip().endswith(SENTENCE_END) \
+                    and all(labels[j] == labels[i] for j in range(i, i + k)):
+                for j in range(i, i + k):
+                    labels[j] = labels[i - 1]
+                break
+            # ponctuation un peu avant : les derniers mots de l'ancien tour commencent la phrase
+            if i - k - 1 >= 0 and words[i - k - 1]["word"].strip().endswith(SENTENCE_END) \
+                    and all(labels[j] == labels[i - 1] for j in range(i - k, i)):
+                for j in range(i - k, i):
+                    labels[j] = labels[i]
+                break
+    return labels
+
+
 def split_segments_by_speaker(segments, diarization):
-    """Attribue un intervenant a chaque MOT, puis coupe les segments Whisper aux
-    changements d'intervenant.
+    """Attribue un intervenant a chaque MOT, lisse, puis coupe les segments Whisper
+    aux changements d'intervenant.
 
     Un segment Whisper peut contenir la fin de la phrase de l'un et le debut de
     la reponse de l'autre : l'attribuer en bloc colle la reponse au mauvais
@@ -294,21 +417,20 @@ def split_segments_by_speaker(segments, diarization):
             speaker = _speaker_at(seg["start"], seg["end"], turns) or "Inconnu"
             output.append(dict(seg, speaker=speaker))
             continue
-        run = None
+        speakers = []
         for w in words:
-            speaker = _speaker_at(w["start"], w["end"], turns)
-            if speaker is None:
-                speaker = run["speaker"] if run else "Inconnu"
-            if run is None or speaker != run["speaker"]:
-                if run:
-                    output.append(run)
-                run = dict(seg, start=w["start"], end=w["end"], text="", speaker=speaker, words=[])
-            run["text"] += w["word"]
-            run["end"] = w["end"]
-            run["words"].append(w)
-        output.append(run)
+            spk = _speaker_at(w["start"], w["end"], turns)
+            speakers.append(spk if spk is not None else (speakers[-1] if speakers else None))
+        fallback = _speaker_at(seg["start"], seg["end"], turns) or "Inconnu"
+        speakers = [spk or fallback for spk in speakers]
+        speakers = smooth_word_speakers(words, speakers)
+        for speaker, run_words in _runs(words, speakers):
+            output.append(dict(
+                seg, speaker=speaker,
+                start=run_words[0]["start"], end=run_words[-1]["end"],
+                text="".join(w["word"] for w in run_words).strip(),
+            ))
     for seg in output:
-        seg["text"] = seg["text"].strip()
         seg.pop("words", None)
     return [s for s in output if s["text"]]
 
@@ -408,6 +530,7 @@ def main():
         segments = result["segments"]
 
         # Filtrer les hallucinations
+        segments = remove_hallucination_loops(segments)
         filtered = []
         for seg in segments:
             if seg["start"] >= seg["end"]:
