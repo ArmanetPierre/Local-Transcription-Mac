@@ -91,6 +91,13 @@ Each time you name the speakers of a transcription, Voxa keeps a voice sample fo
 
 Manage known people in **Settings → Known Voices**: rename, merge (rename to an existing name) or forget a voice.
 
+### Transcription engines
+
+**Settings → Transcription Engine**:
+
+- **Python (stable, default)**: Whisper large-v3-turbo on MLX + pyannote community-1, in the Python environment installed by the setup wizard.
+- **Native (experimental)**: the same Whisper model through [WhisperKit](https://github.com/argmaxinc/WhisperKit) and SpeakerKit diarization, on Core ML, without Python. About 2.5× faster. Click **Prepare** once: it downloads ~1.6 GB and optimizes the models for your Mac (a few minutes). Until then, the Python engine is used. Known voices are shared by both engines.
+
 ### Meeting Recording
 
 1. Click **Record a meeting** in the menu bar
@@ -143,7 +150,7 @@ cd TranscriptionApp && xcodegen generate
 ### Tests and benchmark
 
 ```bash
-./scripts/test.sh            # Python + Swift unit tests (or: python | swift)
+./scripts/test.sh            # Python, native engine and app unit tests (or: python | swift)
 ```
 
 `scripts/bench/run_bench.py` measures transcription quality and speed on a private set of real recordings kept outside the repo (word error rate, speaker attribution, automatic speaker recognition, speed). See [scripts/bench/README.md](scripts/bench/README.md). Run it before and after any change to the models or the pipeline.
@@ -185,6 +192,16 @@ TranscriptionApp/
     ├── Views/            # SwiftUI views (SetupView, Detail, Sidebar, Import, MenuBar)
     ├── Utilities/        # EstimationService, SpeakerColors, TimeFormatting
     └── Resources/        # Bundled Python scripts (transcription, MCP server), localizations
+```
+
+### Native engine
+
+`Packages/VoxaEngine` is a Swift package (WhisperKit + SpeakerKit) with the same post-processing as the Python bridge (word-level speaker split, repetition-loop removal, voice matching). Its `voxa-engine` executable speaks the same JSON Lines protocol as `transcribe_bridge.py`; it is built by an Xcode build phase and embedded in `Voxa.app/Contents/MacOS`. `PythonBridge` launches either one.
+
+```bash
+cd Packages/VoxaEngine && swift test                       # engine unit tests
+swift run -c release voxa-engine --prepare                # download + prepare models
+swift run -c release voxa-engine --audio meeting.m4a --json-protocol
 ```
 
 ### Swift ↔ Python Communication

@@ -25,8 +25,23 @@ targets:
       - TranscriptionApp
     dependencies:
       - package: Sparkle
+    postCompileScripts:
+      # Moteur natif (Packages/VoxaEngine) : compile avec SwiftPM et embarque dans
+      # Contents/MacOS. Environnement vide : les variables de build Xcode
+      # perturbent SwiftPM.
+      - name: Embed voxa-engine
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          PKG="$SRCROOT/../Packages/VoxaEngine"
+          SWIFT_ENV="env -i HOME=$HOME PATH=/usr/bin:/bin:/usr/sbin:/sbin DEVELOPER_DIR=$DEVELOPER_DIR"
+          $SWIFT_ENV xcrun swift build --package-path "$PKG" -c release --product voxa-engine --arch arm64
+          BIN="$($SWIFT_ENV xcrun swift build --package-path "$PKG" -c release --arch arm64 --show-bin-path)"
+          mkdir -p "$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH"
+          cp "$BIN/voxa-engine" "$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH/voxa-engine"
     settings:
       base:
+        ENABLE_USER_SCRIPT_SANDBOXING: false
         PRODUCT_BUNDLE_IDENTIFIER: com.pierre.Voxa
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
         INFOPLIST_KEY_CFBundleDisplayName: Voxa

@@ -54,32 +54,49 @@ final class PythonBridge {
         diarize: Bool = true,
         hfToken: String,
         pythonPath: String = PythonBridge.defaultPythonPath,
-        scriptPath: String = PythonBridge.defaultScriptPath
+        scriptPath: String = PythonBridge.defaultScriptPath,
+        engine: TranscriptionEngine = .python
     ) -> AsyncThrowingStream<PythonMessage, Error> {
         AsyncThrowingStream { continuation in
             Task {
-                // Validate paths
-                guard FileManager.default.fileExists(atPath: pythonPath) else {
-                    continuation.finish(throwing: PythonBridgeError.pythonNotFound(path: pythonPath))
-                    return
-                }
-                guard FileManager.default.fileExists(atPath: scriptPath) else {
-                    continuation.finish(throwing: PythonBridgeError.scriptNotFound(path: scriptPath))
-                    return
-                }
-
                 let process = Process()
                 self.process = process
-                process.executableURL = URL(fileURLWithPath: pythonPath)
+                var arguments: [String]
 
-                var arguments = [
-                    "-u", // Unbuffered stdout
-                    scriptPath,
-                    "--audio", audioPath,
-                    "--model", model.rawValue,
-                    "--json-protocol",
-                    "--embeddings-file", SpeakerEmbeddingStore.embeddingsFilePath,
-                ]
+                switch engine {
+                case .python:
+                    // Validate paths
+                    guard FileManager.default.fileExists(atPath: pythonPath) else {
+                        continuation.finish(throwing: PythonBridgeError.pythonNotFound(path: pythonPath))
+                        return
+                    }
+                    guard FileManager.default.fileExists(atPath: scriptPath) else {
+                        continuation.finish(throwing: PythonBridgeError.scriptNotFound(path: scriptPath))
+                        return
+                    }
+                    process.executableURL = URL(fileURLWithPath: pythonPath)
+                    arguments = [
+                        "-u", // Unbuffered stdout
+                        scriptPath,
+                        "--audio", audioPath,
+                        "--model", model.rawValue,
+                        "--json-protocol",
+                        "--embeddings-file", SpeakerEmbeddingStore.embeddingsFilePath,
+                    ]
+                case .native:
+                    // Moteur natif embarque (WhisperKit + SpeakerKit), meme protocole JSON Lines
+                    guard let executable = NativeEngineSupport.executableURL else {
+                        continuation.finish(throwing: PythonBridgeError.scriptNotFound(path: "voxa-engine"))
+                        return
+                    }
+                    process.executableURL = executable
+                    arguments = [
+                        "--audio", audioPath,
+                        "--json-protocol",
+                        "--embeddings-file", SpeakerEmbeddingStore.embeddingsFilePath,
+                        "--models-dir", NativeEngineSupport.modelsDirectory.path,
+                    ]
+                }
                 if let lang = language {
                     arguments += ["--language", lang]
                 }

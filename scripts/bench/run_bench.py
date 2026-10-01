@@ -147,8 +147,10 @@ def hf_token():
     return None
 
 
-def run_bridge(bridge, audio, language, embeddings_file, log_path):
-    cmd = [sys.executable, "-u", bridge, "--audio", audio, "--json-protocol"]
+def run_bridge(bridge, audio, language, embeddings_file, log_path, extra_args=()):
+    # Script Python (lance avec le Python courant) ou executable (ex. voxa-engine natif)
+    prefix = [sys.executable, "-u", bridge] if bridge.endswith(".py") else [bridge]
+    cmd = prefix + ["--audio", audio, "--json-protocol"] + list(extra_args)
     if language:
         cmd += ["--language", language]
     if embeddings_file:
@@ -343,7 +345,8 @@ def run(args):
         result, steps, elapsed = run_bridge(
             args.bridge, audio, ref.get("language"),
             gallery if os.path.exists(gallery) else None,
-            os.path.join(run_dir, ref["id"] + ".log"))
+            os.path.join(run_dir, ref["id"] + ".log"),
+            args.bridge_args.split() if args.bridge_args else ())
         with open(os.path.join(run_dir, ref["id"] + ".json"), "w") as f:
             json.dump(result, f, ensure_ascii=False)
         row = evaluate(ref, result, steps, elapsed, load_gallery(gallery))
@@ -394,6 +397,7 @@ def main():
     parser.add_argument("--items", nargs="*", help="Limiter a ces extraits")
     parser.add_argument("--bridge", default=DEFAULT_BRIDGE, help="Script de transcription a tester")
     parser.add_argument("--bench-dir", default=DEFAULT_BENCH)
+    parser.add_argument("--bridge-args", default="", help="Arguments supplementaires pour le bridge")
     parser.add_argument("--compare", nargs="+", metavar="LABEL", help="Afficher des runs deja faits")
     parser.add_argument("--gallery-mode", choices=["multi", "single"], default="multi",
                         help="multi : plusieurs empreintes par personne ; single : comportement Voxa <= 1.4")

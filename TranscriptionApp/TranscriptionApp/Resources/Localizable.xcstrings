@@ -1918,6 +1918,116 @@
           }
         }
       }
+    },
+    "Python (stable)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python (stable)"
+          }
+        }
+      }
+    },
+    "Native (experimental)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Natif (expérimental)"
+          }
+        }
+      }
+    },
+    "Transcription Engine" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moteur de transcription"
+          }
+        }
+      }
+    },
+    "Engine" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moteur"
+          }
+        }
+      }
+    },
+    "Native engine: about 2.5× faster, no Python needed. Quality is close to the Python engine but it may miss a few words when people talk over each other." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moteur natif : environ 2,5 fois plus rapide, sans Python. Qualité proche du moteur Python, mais il peut manquer quelques mots quand plusieurs personnes parlent en même temps."
+          }
+        }
+      }
+    },
+    "Models ready" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles prêts"
+          }
+        }
+      }
+    },
+    "Preparing..." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation..."
+          }
+        }
+      }
+    },
+    "Prepare" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparer"
+          }
+        }
+      }
+    },
+    "Downloads about 1.6 GB and optimizes the models for this Mac. Takes a few minutes, once." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharge environ 1,6 Go et optimise les modèles pour ce Mac. Prend quelques minutes, une seule fois."
+          }
+        }
+      }
+    },
+    "Preparing the native engine failed." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La préparation du moteur natif a échoué."
+          }
+        }
+      }
+    },
+    "Models not prepared for this version: the Python engine is used meanwhile" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles non préparés pour cette version : le moteur Python est utilisé en attendant"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

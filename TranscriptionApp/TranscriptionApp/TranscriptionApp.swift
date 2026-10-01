@@ -82,6 +82,7 @@ struct TranscriptionApp: App {
                                 setupCompleted = false
                             } else {
                                 listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
+                                NativeEngineSupport.shared.prepareIfNeeded()
                             }
                         }
                 } else {

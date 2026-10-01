@@ -41,6 +41,11 @@ echo "   Version: $VERSION (build $BUILD)"
 
 # 2. Sign (deep sign all nested binaries)
 echo "🔏 Signing Voxa.app..."
+# Moteur natif embarque : executable auxiliaire, a signer lui-meme (hardened runtime)
+if [ -f "$APP_PATH/Contents/MacOS/voxa-engine" ]; then
+    codesign --force --options runtime --timestamp \
+        --sign "$SIGN_IDENTITY" "$APP_PATH/Contents/MacOS/voxa-engine"
+fi
 codesign --deep --force --options runtime \
     --sign "$SIGN_IDENTITY" \
     --entitlements TranscriptionApp/TranscriptionApp/Resources/TranscriptionApp.entitlements \

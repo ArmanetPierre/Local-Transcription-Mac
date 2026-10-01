@@ -47,6 +47,8 @@ struct SettingsView: View {
                     .help("Automatically identify different speakers")
             }
 
+            EngineSection()
+
             Section("LLM Summary (Ollama)") {
                 Picker("Ollama Model", selection: $ollamaModel) {
                     ForEach(OllamaModel.allCases) { model in

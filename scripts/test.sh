@@ -14,6 +14,9 @@ if [ "${1:-all}" != "swift" ]; then
 fi
 
 if [ "${1:-all}" != "python" ]; then
+    echo "🧪 Tests moteur natif (Packages/VoxaEngine)..."
+    swift test --package-path Packages/VoxaEngine --quiet
+
     echo "🧪 Tests Swift..."
     xcodebuild test \
         -project TranscriptionApp/TranscriptionApp.xcodeproj \

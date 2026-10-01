@@ -50,3 +50,6 @@ DerivedData/
 
 # Secrets
 .env
+
+# Cache Xcode (index, compilation)
+TranscriptionApp/.build/

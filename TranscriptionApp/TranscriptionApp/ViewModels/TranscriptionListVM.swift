@@ -208,7 +208,7 @@ final class TranscriptionListVM {
         print("[ListVM] === DEBUT TRANSCRIPTION ===")
         print("[ListVM] Projet: \(project.title) (id: \(project.id))")
         print("[ListVM] Audio: \(project.audioFilePath)")
-        print("[ListVM] Modele: \(project.whisperModel), diarize: \(project.diarizationEnabled)")
+        print("[ListVM] Modele: \(project.whisperModel), diarize: \(project.diarizationEnabled), moteur: \(TranscriptionEngine.selected.rawValue)")
         print("[ListVM] Langue: \(project.language ?? "auto")")
 
         project.status = .transcribing
@@ -234,7 +234,8 @@ final class TranscriptionListVM {
             diarize: project.diarizationEnabled,
             hfToken: hfToken,
             pythonPath: pythonPath,
-            scriptPath: scriptPath
+            scriptPath: scriptPath,
+            engine: TranscriptionEngine.selected
         )
 
         var messageCount = 0
