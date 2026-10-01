@@ -78,7 +78,6 @@ final class PythonBridge {
                     "--audio", audioPath,
                     "--model", model.rawValue,
                     "--json-protocol",
-                    "--hf-token", hfToken,
                     "--embeddings-file", SpeakerEmbeddingStore.embeddingsFilePath,
                 ]
                 if let lang = language {
@@ -102,6 +101,10 @@ final class PythonBridge {
                 var env = ProcessInfo.processInfo.environment
                 env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
                 env["PYTHONUNBUFFERED"] = "1"
+                // Jeton par variable d'environnement : un argument serait visible de tous via `ps`
+                if !hfToken.isEmpty {
+                    env["HF_TOKEN"] = hfToken
+                }
                 // Desactiver la validation Metal (activee par Xcode en Debug)
                 // pour eviter les SIGABRT sur certains shaders pyannote/MPS
                 env["METAL_DEVICE_WRAPPER_TYPE"] = "0"
@@ -163,16 +166,25 @@ final class PythonBridge {
                     }
                 }
 
+                // Lire stderr au fil de l'eau : si personne ne le vide, le tampon du
+                // pipe (64 Ko) se remplit et Python se bloque en ecrivant ses logs.
+                // On ne garde que la fin, utile pour le message d'erreur.
+                let stderrTail = StderrTail()
+                stderr.fileHandleForReading.readabilityHandler = { handle in
+                    stderrTail.append(handle.availableData)
+                }
+
                 process.terminationHandler = { [weak self] proc in
                     stdout.fileHandleForReading.readabilityHandler = nil
+                    stderr.fileHandleForReading.readabilityHandler = nil
+                    stderrTail.append(stderr.fileHandleForReading.readDataToEndOfFile())
 
                     Task { @MainActor in
                         self?.isRunning = false
                     }
 
                     if proc.terminationStatus != 0 {
-                        let errData = stderr.fileHandleForReading.readDataToEndOfFile()
-                        let errStr = String(data: errData, encoding: .utf8) ?? "Erreur inconnue"
+                        let errStr = stderrTail.text.isEmpty ? "Erreur inconnue" : stderrTail.text
                         continuation.finish(throwing: PythonBridgeError.processExited(
                             code: proc.terminationStatus, stderr: errStr))
                     } else {
@@ -198,5 +210,32 @@ final class PythonBridge {
 
     func cancel() {
         process?.terminate()
+    }
+}
+
+/// Fin de la sortie d'erreur d'un processus, remplie depuis un thread de lecture.
+final class StderrTail: @unchecked Sendable {
+    private let lock = NSLock()
+    private var data = Data()
+    private let maxBytes: Int
+
+    init(maxBytes: Int = 64 * 1024) {
+        self.maxBytes = maxBytes
+    }
+
+    func append(_ chunk: Data) {
+        guard !chunk.isEmpty else { return }
+        lock.lock()
+        defer { lock.unlock() }
+        data.append(chunk)
+        if data.count > maxBytes {
+            data = data.suffix(maxBytes)
+        }
+    }
+
+    var text: String {
+        lock.lock()
+        defer { lock.unlock() }
+        return String(decoding: data, as: UTF8.self)
     }
 }

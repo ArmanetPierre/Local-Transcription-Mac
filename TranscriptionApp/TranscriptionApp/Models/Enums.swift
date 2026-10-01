@@ -82,4 +82,12 @@ enum OllamaModel: String, CaseIterable, Identifiable {
         case .mistral: "Mistral"
         }
     }
+
+    /// Taille approximative du telechargement
+    var approximateSize: String {
+        switch self {
+        case .llama3_1: "4.9 GB"
+        case .mistral: "4.1 GB"
+        }
+    }
 }

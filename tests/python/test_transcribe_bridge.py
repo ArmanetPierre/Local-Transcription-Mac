@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESOURCES = os.path.join(HERE, "..", "..", "TranscriptionApp", "TranscriptionApp", "Resources")
@@ -93,6 +94,34 @@ class AssignSpeakersTests(unittest.TestCase):
         diarization = annotation((0, 4.5, "SPEAKER_00"), (4.5, 9, "SPEAKER_01"))
         bridge.assign_speakers_to_segments(segments, diarization)
         self.assertEqual([s["speaker"] for s in segments], ["SPEAKER_00", "SPEAKER_01"])
+
+
+class DiarizationPipelineTests(unittest.TestCase):
+    def test_prefers_community_1(self):
+        with mock.patch.object(bridge.PyannotePipeline, "from_pretrained", return_value="P") as load:
+            pipeline, name = bridge.load_diarization_pipeline("tok")
+        self.assertEqual((pipeline, name), ("P", "pyannote/speaker-diarization-community-1"))
+        load.assert_called_once_with("pyannote/speaker-diarization-community-1", token="tok")
+
+    def test_falls_back_to_3_1_when_community_1_unavailable(self):
+        def fake(name, token=None):
+            if "community" in name:
+                raise RuntimeError("gated repo: accept the conditions")
+            return "P31"
+        with mock.patch.object(bridge.PyannotePipeline, "from_pretrained", side_effect=fake):
+            self.assertEqual(bridge.load_diarization_pipeline("tok"),
+                             ("P31", "pyannote/speaker-diarization-3.1"))
+
+    def test_raises_when_nothing_available(self):
+        with mock.patch.object(bridge.PyannotePipeline, "from_pretrained", side_effect=RuntimeError("offline")):
+            with self.assertRaises(RuntimeError):
+                bridge.load_diarization_pipeline(None)
+
+    def test_forced_model_has_no_fallback(self):
+        with mock.patch.object(bridge.PyannotePipeline, "from_pretrained", side_effect=RuntimeError("no")) as load:
+            with self.assertRaises(RuntimeError):
+                bridge.load_diarization_pipeline("tok", "pyannote/speaker-diarization-3.1")
+        self.assertEqual(load.call_count, 1)
 
 
 if __name__ == "__main__":

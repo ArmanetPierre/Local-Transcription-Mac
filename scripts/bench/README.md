@@ -25,7 +25,7 @@ PY="$HOME/Library/Application Support/Voxa/.venv/bin/python"
 "$PY" scripts/bench/run_bench.py --compare baseline essai
 ```
 
-Le jeton HuggingFace est lu dans les préférences de Voxa (ou `HF_TOKEN`).
+Le jeton HuggingFace est lu dans le Trousseau (là où Voxa le range depuis la 1.4), sinon dans `HF_TOKEN`.
 
 ## Jeu de test
 

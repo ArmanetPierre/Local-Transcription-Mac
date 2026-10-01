@@ -11,6 +11,9 @@ final class TranscriptionDetailVM {
     var showSpeakerRenameFor: String?
     var ollamaAvailable: Bool?
     var summaryError: String?
+    /// Modele Ollama absent : on demande avant de lancer un telechargement de plusieurs Go
+    var modelDownloadRequest: OllamaModel?
+    private var downloadApproved = false
     var audioLoadError: String?
 
     func loadAudio(for project: TranscriptionProject) {
@@ -52,6 +55,8 @@ final class TranscriptionDetailVM {
             names[label] = newName
             // Sauvegarder le nom dans l'historique global
             SpeakerNameHistory.addNames([newName])
+            // Memoriser la voix pour la reconnaissance automatique
+            SpeakerEmbeddingStore.shared.confirmSpeakerNames(projectId: project.id, labelToName: [label: newName])
         }
         project.speakerNames = names
     }
@@ -114,7 +119,16 @@ final class TranscriptionDetailVM {
         ) ?? .llama3_1
         print("[Generation] Modele: \(selectedModel.rawValue)")
 
-        // 0. S'assurer que le modele est telecharge
+        // 0. S'assurer que le modele est telecharge (avec accord de l'utilisateur)
+        let autoDownload = UserDefaults.standard.bool(forKey: "ollama_auto_download")
+        if !autoDownload && !downloadApproved,
+           !(await ollamaService.isModelAvailable(selectedModel)) {
+            project.status = .completed
+            modelDownloadRequest = selectedModel
+            print("[Generation] Modele \(selectedModel.rawValue) absent : demande de telechargement")
+            return
+        }
+        downloadApproved = false
         let modelReady = await ollamaService.ensureModelAvailable(selectedModel)
         guard modelReady else {
             project.status = .completed
@@ -192,6 +206,13 @@ final class TranscriptionDetailVM {
             print("[Export PDF] Erreur: \(error)")
             summaryError = "Export PDF: \(error.localizedDescription)"
         }
+    }
+
+    /// L'utilisateur accepte de telecharger le modele : on relance la generation
+    func approveModelDownload(project: TranscriptionProject) {
+        modelDownloadRequest = nil
+        downloadApproved = true
+        regenerateAll(project: project)
     }
 
     // Legacy compatibility

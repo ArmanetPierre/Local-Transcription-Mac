@@ -155,6 +155,9 @@ def match_speakers_with_saved(new_embeddings, saved_embeddings, threshold=0.65):
         for saved_name, saved_emb in saved_embeddings.items():
             # Ignorer les embeddings d'un autre modele (dimension differente)
             if len(saved_emb) != len(new_emb):
+                if new_label == next(iter(new_embeddings)):
+                    log(f"Voix '{saved_name}' ignoree : empreinte de dimension {len(saved_emb)} "
+                        f"au lieu de {len(new_emb)} (autre modele)", level="warning")
                 continue
             sim = cosine_similarity(new_emb, saved_emb)
             if sim >= threshold:
@@ -195,6 +198,28 @@ def assign_speakers_to_segments(segments, diarization):
     return segments
 
 
+# Pipelines de diarisation, du prefere au repli. community-1 (pyannote 4) fait
+# moins de confusions entre intervenants ; 3.1 sert de repli si l'utilisateur
+# n'a pas encore accepte ses conditions sur HuggingFace.
+DIARIZATION_MODELS = [
+    "pyannote/speaker-diarization-community-1",
+    "pyannote/speaker-diarization-3.1",
+]
+
+
+def load_diarization_pipeline(hf_token, preferred=None):
+    """Charge le premier pipeline disponible. Retourne (pipeline, nom)."""
+    candidates = [preferred] if preferred else DIARIZATION_MODELS
+    errors = []
+    for name in candidates:
+        try:
+            return PyannotePipeline.from_pretrained(name, token=hf_token), name
+        except Exception as e:
+            log(f"Pipeline {name} indisponible: {e}", level="debug")
+            errors.append(e)
+    raise errors[-1]
+
+
 MLX_MODELS = {
     "tiny": "mlx-community/whisper-tiny-mlx",
     "base": "mlx-community/whisper-base-mlx",
@@ -219,6 +244,8 @@ def main():
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--hf-token", default=None)
     parser.add_argument("--no-diarize", action="store_true")
+    parser.add_argument("--diarization-model", default=None, choices=DIARIZATION_MODELS,
+                        help="Forcer un pipeline de diarisation (defaut : le meilleur disponible)")
     parser.add_argument("--embeddings-file", default=None,
                         help="Fichier JSON des embeddings speakers sauvegardes")
     parser.add_argument("--json-protocol", action="store_true",
@@ -320,10 +347,8 @@ def main():
                 os.environ["HF_HUB_OFFLINE"] = "1"
 
             try:
-                pipeline = PyannotePipeline.from_pretrained(
-                    "pyannote/speaker-diarization-3.1",
-                    token=hf_token,
-                )
+                pipeline, pipeline_name = load_diarization_pipeline(hf_token, args.diarization_model)
+                log(f"Pipeline de diarisation: {pipeline_name}")
             except Exception as e:
                 if hf_token is None:
                     msg = ("Modeles pyannote non trouves en cache local. "
@@ -391,11 +416,16 @@ def main():
             if tmp_wav is not None:
                 os.unlink(tmp_wav.name)
 
-            # Extraire l'annotation (pyannote 4.x retourne DiarizeOutput)
+            # Extraire l'annotation (pyannote 4.x retourne DiarizeOutput).
+            # La version "exclusive" (un seul intervenant a la fois) est celle
+            # prevue pour etre alignee sur une transcription.
             if hasattr(diarize_output, "speaker_diarization"):
                 diarization = diarize_output.speaker_diarization
+                exclusive = getattr(diarize_output, "exclusive_speaker_diarization", None)
+                assignment_diarization = exclusive if exclusive is not None else diarization
             else:
                 diarization = diarize_output
+                assignment_diarization = diarization
 
             # Recuperer les centroids depuis DiarizeOutput (pyannote 4.x)
             # DiarizeOutput.speaker_embeddings = array (num_speakers, dimension)
@@ -423,7 +453,7 @@ def main():
             else:
                 print("[3/3] Attribution des speakers aux segments...")
 
-            segments = assign_speakers_to_segments(segments, diarization)
+            segments = assign_speakers_to_segments(segments, assignment_diarization)
             speakers = sorted(set(seg.get("speaker", "Inconnu") for seg in segments))
 
             # Construire le dictionnaire d'embeddings par speaker

@@ -32,7 +32,7 @@ struct SpeakerSetupView: View {
                 // Actions
                 HStack {
                     Button("Skip") {
-                        SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
+                        // Les empreintes restent gardees : nommer plus tard via les badges les enregistrera
                         viewModel.skipSpeakerNames(project: project)
                     }
                     .buttonStyle(.bordered)

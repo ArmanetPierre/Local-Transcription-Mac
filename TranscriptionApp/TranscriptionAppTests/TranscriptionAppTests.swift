@@ -196,3 +196,71 @@ final class UtilitiesTests: XCTestCase {
         XCTAssertFalse(TranscriptionListVM.isVideo(URL(fileURLWithPath: "/a/call.wav")))
     }
 }
+
+// MARK: - Sortie d'erreur Python
+
+final class StderrTailTests: XCTestCase {
+    func testKeepsOnlyTheEnd() {
+        let tail = StderrTail(maxBytes: 10)
+        tail.append(Data("0123456789".utf8))
+        tail.append(Data("ABCDE".utf8))
+        XCTAssertEqual(tail.text, "56789ABCDE")
+    }
+
+    func testIgnoresEmptyChunks() {
+        let tail = StderrTail()
+        tail.append(Data())
+        XCTAssertEqual(tail.text, "")
+    }
+
+    func testConcurrentAppends() {
+        let tail = StderrTail(maxBytes: 1_000_000)
+        DispatchQueue.concurrentPerform(iterations: 100) { _ in
+            tail.append(Data("x".utf8))
+        }
+        XCTAssertEqual(tail.text.count, 100)
+    }
+}
+
+// MARK: - Jeton HuggingFace (Trousseau)
+
+final class HuggingFaceTokenTests: XCTestCase {
+    private var suite: UserDefaults!
+
+    override func setUp() {
+        HuggingFaceToken.service = "com.pierre.Voxa.tests.\(UUID().uuidString)"
+        suite = UserDefaults(suiteName: "VoxaTests.\(UUID().uuidString)")
+        HuggingFaceToken.defaults = suite
+    }
+
+    override func tearDown() {
+        HuggingFaceToken.value = ""
+        HuggingFaceToken.service = "com.pierre.Voxa"
+        HuggingFaceToken.defaults = .standard
+    }
+
+    func testSetReadAndClear() {
+        XCTAssertFalse(HuggingFaceToken.isSet)
+        HuggingFaceToken.value = "  hf_abc  "
+        XCTAssertEqual(HuggingFaceToken.value, "hf_abc")
+        HuggingFaceToken.value = "hf_new"
+        XCTAssertEqual(HuggingFaceToken.value, "hf_new")
+        HuggingFaceToken.value = ""
+        XCTAssertFalse(HuggingFaceToken.isSet)
+    }
+
+    func testMigrationMovesLegacyTokenAndRemovesIt() {
+        suite.set("hf_legacy", forKey: "hf_token")
+        HuggingFaceToken.migrateFromUserDefaults()
+        XCTAssertEqual(HuggingFaceToken.value, "hf_legacy")
+        XCTAssertNil(suite.string(forKey: "hf_token"))
+    }
+
+    func testMigrationKeepsExistingKeychainToken() {
+        HuggingFaceToken.value = "hf_keychain"
+        suite.set("hf_legacy", forKey: "hf_token")
+        HuggingFaceToken.migrateFromUserDefaults()
+        XCTAssertEqual(HuggingFaceToken.value, "hf_keychain")
+        XCTAssertNil(suite.string(forKey: "hf_token"))
+    }
+}

@@ -122,11 +122,13 @@ final class DependencyManager {
             "/opt/homebrew/bin/python3.11",
             "/opt/homebrew/bin/python3.12",
             "/opt/homebrew/bin/python3.13",
+            "/opt/homebrew/bin/python3.14",
             "/usr/local/bin/python3",
             "/usr/bin/python3",
             "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
             "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
             "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",
+            "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
         ]
 
         // First try `which python3` to find it in PATH
@@ -206,7 +208,8 @@ final class DependencyManager {
             if let match = output.firstMatch(of: pattern) {
                 let major = Int(match.1) ?? 0
                 let minor = Int(match.2) ?? 0
-                return major == 3 && minor >= 11
+                // Versions pour lesquelles requirements.txt est teste
+                return major == 3 && (11...14).contains(minor)
             }
         } catch {
             // Ignore
@@ -536,7 +539,7 @@ final class DependencyManager {
         var errorDescription: String? {
             switch self {
             case .pythonNotFound:
-                String(localized: "Python 3.11+ not found on this system.")
+                String(localized: "Python 3.11 to 3.14 not found on this system.")
             case .requirementsNotFound:
                 String(localized: "requirements.txt not found. Try reinstalling Voxa.")
             case .processExited(let code, let stderr):

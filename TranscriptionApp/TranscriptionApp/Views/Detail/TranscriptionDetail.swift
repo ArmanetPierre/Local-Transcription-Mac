@@ -70,6 +70,22 @@ struct TranscriptionDetail: View {
                 }
             }
         }
+        .alert(
+            "Download \(viewModel.modelDownloadRequest?.displayName ?? "")?",
+            isPresented: Binding(
+                get: { viewModel.modelDownloadRequest != nil },
+                set: { if !$0 { viewModel.modelDownloadRequest = nil } }
+            )
+        ) {
+            Button("Download") {
+                viewModel.approveModelDownload(project: project)
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.modelDownloadRequest = nil
+            }
+        } message: {
+            Text("This Ollama model is not installed yet. The download is about \(viewModel.modelDownloadRequest?.approximateSize ?? "") and happens once.")
+        }
         .toolbar {
             ToolbarItemGroup {
                 if project.status == .completed {

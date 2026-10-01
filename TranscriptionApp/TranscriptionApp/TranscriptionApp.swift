@@ -45,6 +45,10 @@ struct TranscriptionApp: App {
             configurations: config
         )
 
+        if !Self.isRunningTests {
+            HuggingFaceToken.migrateFromUserDefaults()
+        }
+
         let listVM = TranscriptionListVM()
         self._listVM = State(initialValue: listVM)
         self.apiServer = LocalAPIServer(listVM: listVM, modelContainer: modelContainer)

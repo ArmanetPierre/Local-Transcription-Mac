@@ -118,12 +118,16 @@ def speaker_mapping(ref_segments, hyp_segments, duration):
 def hf_token():
     if os.environ.get("HF_TOKEN"):
         return os.environ["HF_TOKEN"]
-    try:
-        return subprocess.check_output(
-            ["defaults", "read", "com.pierre.Voxa", "hf_token"], stderr=subprocess.DEVNULL
-        ).decode().strip()
-    except subprocess.CalledProcessError:
-        return None
+    # Trousseau (Voxa >= 1.4), puis anciennes preferences
+    for cmd in (["security", "find-generic-password", "-s", "com.pierre.Voxa", "-a", "hf_token", "-w"],
+                ["defaults", "read", "com.pierre.Voxa", "hf_token"]):
+        try:
+            token = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
+            if token:
+                return token
+        except subprocess.CalledProcessError:
+            continue
+    return None
 
 
 def run_bridge(bridge, audio, language, embeddings_file, log_path):
@@ -152,6 +156,9 @@ def run_bridge(bridge, audio, language, embeddings_file, log_path):
                 steps[msg["step"]] = round(msg.get("duration_sec", 0), 1)
             elif msg.get("type") == "error":
                 errors.append(msg.get("message"))
+            if msg.get("type") in ("log", "error"):
+                log.write("[%s] %s\n" % (msg.get("level", "error"), msg.get("message")))
+                log.flush()
         proc.wait()
     elapsed = time.time() - start
     if result is None:

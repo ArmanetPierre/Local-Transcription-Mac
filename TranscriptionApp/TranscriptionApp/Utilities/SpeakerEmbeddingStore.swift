@@ -1,48 +1,93 @@
 import Foundation
 
 /// Gere les embeddings vocaux des speakers pour le matching automatique.
-/// - Pending : embeddings recus du Python (pas encore confirmes par l'utilisateur)
-/// - Saved : embeddings sur disque associes a des noms confirmes
+/// - Projet : embeddings recus du Python pour chaque transcription, gardes sur
+///   disque pour pouvoir nommer un intervenant plus tard (meme apres un redemarrage)
+/// - Saved : embeddings associes a des noms confirmes, utilises pour la reconnaissance
 final class SpeakerEmbeddingStore {
     static let shared = SpeakerEmbeddingStore()
 
-    // Pending embeddings from diarization, keyed by project UUID
-    private var pendingEmbeddings: [UUID: [String: [Double]]] = [:]
+    // Embeddings par projet (UUID) puis par label (SPEAKER_00...)
+    private var projectEmbeddings: [UUID: [String: [Double]]]
+    // Matchs automatiques : seulement utiles juste apres la transcription
     private var pendingMatches: [UUID: [String: String]] = [:]
+    private let lock = NSLock()
+
+    init() {
+        projectEmbeddings = Self.loadProjectEmbeddings()
+    }
 
     /// Chemin du fichier JSON global des embeddings sauvegardes
     static var embeddingsFilePath: String {
-        let appSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!
-        return appSupport
-            .appendingPathComponent("Voxa/speaker_embeddings.json")
-            .path
+        voxaDirectory.appendingPathComponent("speaker_embeddings.json").path
     }
 
-    // MARK: - Pending (from diarization, before user confirmation)
+    /// Embeddings de chaque transcription, en attente d'un nom
+    static var projectEmbeddingsFileURL: URL {
+        voxaDirectory.appendingPathComponent("project_embeddings.json")
+    }
+
+    private static var voxaDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("Voxa", isDirectory: true)
+    }
+
+    // MARK: - Embeddings d'un projet (from diarization)
 
     /// Stocker les embeddings et matchs recus du Python pour un projet
     func setPending(projectId: UUID, embeddings: [String: [Double]], matches: [String: String]) {
-        pendingEmbeddings[projectId] = embeddings
+        lock.lock()
+        projectEmbeddings[projectId] = embeddings
         pendingMatches[projectId] = matches
+        let snapshot = projectEmbeddings
+        lock.unlock()
+        Self.saveProjectEmbeddings(snapshot)
         print("[EmbeddingStore] setPending: \(embeddings.count) embeddings, \(matches.count) matches pour projet \(projectId)")
     }
 
     /// Recuperer les matchs automatiques pour un projet
     func getPendingMatches(projectId: UUID) -> [String: String]? {
-        pendingMatches[projectId]
+        lock.lock()
+        defer { lock.unlock() }
+        return pendingMatches[projectId]
     }
 
-    /// Recuperer les embeddings en attente pour un projet
+    /// Recuperer les embeddings d'un projet
     func getPendingEmbeddings(projectId: UUID) -> [String: [Double]]? {
-        pendingEmbeddings[projectId]
+        lock.lock()
+        defer { lock.unlock() }
+        return projectEmbeddings[projectId]
     }
 
-    /// Nettoyer les donnees temporaires d'un projet
+    /// Oublier les embeddings d'un projet (projet supprime)
     func clearPending(projectId: UUID) {
-        pendingEmbeddings.removeValue(forKey: projectId)
+        lock.lock()
+        let removed = projectEmbeddings.removeValue(forKey: projectId) != nil
         pendingMatches.removeValue(forKey: projectId)
+        let snapshot = projectEmbeddings
+        lock.unlock()
+        if removed {
+            Self.saveProjectEmbeddings(snapshot)
+        }
+    }
+
+    private static func loadProjectEmbeddings() -> [UUID: [String: [Double]]] {
+        guard let data = try? Data(contentsOf: projectEmbeddingsFileURL),
+              let decoded = try? JSONDecoder().decode([String: [String: [Double]]].self, from: data) else {
+            return [:]
+        }
+        var result: [UUID: [String: [Double]]] = [:]
+        for (key, value) in decoded {
+            if let id = UUID(uuidString: key) { result[id] = value }
+        }
+        return result
+    }
+
+    private static func saveProjectEmbeddings(_ embeddings: [UUID: [String: [Double]]]) {
+        let encodable = Dictionary(uniqueKeysWithValues: embeddings.map { ($0.key.uuidString, $0.value) })
+        guard let data = try? JSONEncoder().encode(encodable) else { return }
+        try? FileManager.default.createDirectory(at: voxaDirectory, withIntermediateDirectories: true)
+        try? data.write(to: projectEmbeddingsFileURL, options: .atomic)
     }
 
     // MARK: - Confirmed (save to disk)
@@ -50,7 +95,7 @@ final class SpeakerEmbeddingStore {
     /// Sauvegarder les embeddings avec les noms confirmes par l'utilisateur.
     /// labelToName : ["SPEAKER_00": "Pierre", "SPEAKER_01": "Jean"]
     func confirmSpeakerNames(projectId: UUID, labelToName: [String: String]) {
-        guard let embeddings = pendingEmbeddings[projectId] else {
+        guard let embeddings = getPendingEmbeddings(projectId: projectId) else {
             print("[EmbeddingStore] confirmSpeakerNames: aucun embedding en attente pour \(projectId)")
             return
         }
@@ -65,7 +110,6 @@ final class SpeakerEmbeddingStore {
         }
 
         saveToDisk(saved)
-        clearPending(projectId: projectId)
         print("[EmbeddingStore] \(saved.count) speakers sauvegardes au total")
     }
 

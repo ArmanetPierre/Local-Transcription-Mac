@@ -1,5 +1,8 @@
-mlx-whisper
-torch
-torchaudio
-pyannote.audio>=3.1
-soundfile
+# Versions figees, testees avec scripts/bench (Python 3.11 a 3.14, Apple Silicon).
+# Pour monter une version : modifier ici, lancer ./scripts/test.sh et le banc.
+mlx-whisper==0.4.3
+mlx==0.32.2
+torch==2.14.0
+torchaudio==2.11.0
+pyannote.audio==4.0.7
+soundfile==0.14.0

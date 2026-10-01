@@ -1728,6 +1728,66 @@
           }
         }
       }
+    },
+    "Download models automatically" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger les modèles automatiquement"
+          }
+        }
+      }
+    },
+    "Otherwise Voxa asks before downloading a missing model (several GB)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinon, Voxa demande avant de télécharger un modèle manquant (plusieurs Go)"
+          }
+        }
+      }
+    },
+    "Download %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger %@ ?"
+          }
+        }
+      }
+    },
+    "Download" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger"
+          }
+        }
+      }
+    },
+    "This Ollama model is not installed yet. The download is about %@ and happens once." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce modèle Ollama n'est pas encore installé. Le téléchargement pèse environ %@ et n'a lieu qu'une fois."
+          }
+        }
+      }
+    },
+    "Python 3.11 to 3.14 not found on this system." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python 3.11 à 3.14 introuvable sur ce système."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

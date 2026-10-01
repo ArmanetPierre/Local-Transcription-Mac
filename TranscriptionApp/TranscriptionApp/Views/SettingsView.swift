@@ -12,12 +12,13 @@ struct SettingsView: View {
         ).updater
     }
 
-    @AppStorage("hf_token") private var hfToken = ""
+    @State private var hfToken = HuggingFaceToken.value
     @AppStorage("default_model") private var defaultModel = WhisperModel.largeV3Turbo.rawValue
     @AppStorage("python_path") private var pythonPath = PythonBridge.defaultPythonPath
     @AppStorage("script_path") private var scriptPath = PythonBridge.defaultScriptPath
     @AppStorage("default_diarization") private var defaultDiarization = true
     @AppStorage("ollama_model") private var ollamaModel = OllamaModel.llama3_1.rawValue
+    @AppStorage("ollama_auto_download") private var ollamaAutoDownload = false
     @AppStorage("setup_completed") private var setupCompleted = true
 
     @State private var ollamaStatus: OllamaStatus = .unknown
@@ -34,6 +35,7 @@ struct SettingsView: View {
         Form {
             Section("HuggingFace") {
                 SecureField("HuggingFace Token", text: $hfToken)
+                    .onChange(of: hfToken) { _, newValue in HuggingFaceToken.value = newValue }
                     .help("Required for downloading pyannote models (diarization)")
                 Text("Create a token at huggingface.co/settings/tokens")
                     .font(.caption)
@@ -58,6 +60,9 @@ struct SettingsView: View {
                     }
                 }
                 .help("Model used to generate speaker summaries")
+
+                Toggle("Download models automatically", isOn: $ollamaAutoDownload)
+                    .help("Otherwise Voxa asks before downloading a missing model (several GB)")
 
                 HStack(spacing: 8) {
                     switch ollamaStatus {

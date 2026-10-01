@@ -189,7 +189,7 @@ final class TranscriptionListVM {
         project.progressPercent = 0
         estimationService.startTracking()
 
-        let hfToken = UserDefaults.standard.string(forKey: "hf_token") ?? ""
+        let hfToken = HuggingFaceToken.value
         let pythonPath = UserDefaults.standard.string(forKey: "python_path")
             ?? PythonBridge.defaultPythonPath
         var scriptPath = UserDefaults.standard.string(forKey: "script_path")

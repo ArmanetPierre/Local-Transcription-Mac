@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		080FD2D439C1FD7EC9BBE8E4 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
 		0A5BFC0F17E1B505F8B2C575 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
 		0B7C47002B4458F30E439F1D /* SpeakerNameHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */; };
 		0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */ = {isa = PBXBuildFile; fileRef = 170DCEDA15AD1CCF6C976075 /* transcribe.py */; };
@@ -83,6 +84,7 @@
 		3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionRow.swift; sourceTree = "<group>"; };
 		42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSheet.swift; sourceTree = "<group>"; };
+		52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceToken.swift; sourceTree = "<group>"; };
 		5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerEmbeddingStore.swift; sourceTree = "<group>"; };
 		59B1CA4B4049A73379AF6AC0 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		66178D29E0227C619444F7B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				8B8D07174F75A25BC11B62ED /* EstimationService.swift */,
+				52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */,
 				907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */,
 				5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */,
 				0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */,
@@ -412,6 +415,7 @@
 				454E7FDF3BB8C4DE4B602CC4 /* EstimationService.swift in Sources */,
 				C3E677302429CA54403C315E /* ExportService.swift in Sources */,
 				D6E143177F7E59F557750D07 /* ExportSheet.swift in Sources */,
+				080FD2D439C1FD7EC9BBE8E4 /* HuggingFaceToken.swift in Sources */,
 				9D412DA9327F05F9669DD177 /* ImportDropZone.swift in Sources */,
 				A867C9032D58A323804A84EC /* LocalAPIServer.swift in Sources */,
 				F06A7AD85564321ECFC2499E /* MarkdownContentView.swift in Sources */,

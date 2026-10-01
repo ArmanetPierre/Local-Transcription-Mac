@@ -10,7 +10,7 @@ Native macOS application (SwiftUI) for audio transcription with speaker identifi
 ## Features
 
 - **Audio transcription** via [mlx-whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper) (Apple Silicon GPU optimized)
-- **Diarization** (speaker identification) via [pyannote.audio](https://github.com/pyannote/pyannote-audio) 3.1
+- **Diarization** (speaker identification) via [pyannote.audio](https://github.com/pyannote/pyannote-audio) 4 (`speaker-diarization-community-1`, falls back to 3.1)
 - **Meeting recording** with system audio + microphone capture (ScreenCaptureKit)
 - **Speaker summaries** and **meeting reports** via [Ollama](https://ollama.com) (local LLM)
 - **Claude Code integration (MCP)** — transcribe meetings, read transcripts and write meeting reports from Claude Code
@@ -25,7 +25,7 @@ Native macOS application (SwiftUI) for audio transcription with speaker identifi
 ## Prerequisites
 
 - macOS 14.0+ (Sonoma) on Apple Silicon (M1/M2/M3/M4)
-- Python 3.11+ (`brew install python@3.12` or [python.org](https://www.python.org/downloads/))
+- Python 3.11 to 3.14 (`brew install python@3.12` or [python.org](https://www.python.org/downloads/))
 - A [HuggingFace](https://huggingface.co/settings/tokens) token (for pyannote diarization models)
 
 ## Installation
@@ -49,7 +49,10 @@ The setup wizard automatically:
 
 > **Note:** You must accept the terms of use for pyannote models on HuggingFace:
 > - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-> - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+> - [pyannote/speaker-diarization-community-1](https://huggingface.co/pyannote/speaker-diarization-community-1)
+> - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) (fallback)
+>
+> The token is stored in the macOS Keychain.
 
 ### Optional: FFmpeg
 
@@ -69,6 +72,8 @@ For AI-powered meeting summaries and speaker synthesis:
 ```bash
 ollama pull llama3.1:8b
 ```
+
+If the selected model is missing, Voxa asks before downloading it (several GB). Enable **Settings → Download models automatically** to skip the prompt.
 
 ## Usage
 

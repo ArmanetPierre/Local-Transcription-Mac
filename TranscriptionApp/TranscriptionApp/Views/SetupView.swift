@@ -4,7 +4,7 @@ struct SetupView: View {
     @Bindable var manager: DependencyManager
     var onComplete: () -> Void
 
-    @AppStorage("hf_token") private var hfToken = ""
+    @State private var hfToken = HuggingFaceToken.value
     @State private var isScrolledToBottom = false
 
     var body: some View {
@@ -180,6 +180,7 @@ struct SetupView: View {
                     ) {
                         VStack(alignment: .leading, spacing: 8) {
                             SecureField("HuggingFace Token", text: $hfToken)
+                                .onChange(of: hfToken) { _, newValue in HuggingFaceToken.value = newValue }
                                 .textFieldStyle(.roundedBorder)
                                 .frame(maxWidth: 400)
 
@@ -198,6 +199,9 @@ struct SetupView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Link("pyannote/segmentation-3.0",
                                      destination: URL(string: "https://huggingface.co/pyannote/segmentation-3.0")!)
+                                    .font(.caption)
+                                Link("pyannote/speaker-diarization-community-1",
+                                     destination: URL(string: "https://huggingface.co/pyannote/speaker-diarization-community-1")!)
                                     .font(.caption)
                                 Link("pyannote/speaker-diarization-3.1",
                                      destination: URL(string: "https://huggingface.co/pyannote/speaker-diarization-3.1")!)
