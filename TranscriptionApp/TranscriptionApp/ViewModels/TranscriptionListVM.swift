@@ -192,8 +192,14 @@ final class TranscriptionListVM {
         let hfToken = UserDefaults.standard.string(forKey: "hf_token") ?? ""
         let pythonPath = UserDefaults.standard.string(forKey: "python_path")
             ?? PythonBridge.defaultPythonPath
-        let scriptPath = UserDefaults.standard.string(forKey: "script_path")
+        var scriptPath = UserDefaults.standard.string(forKey: "script_path")
             ?? PythonBridge.defaultScriptPath
+        #if DEBUG
+        // Permet de brancher scripts/dev/fake_bridge.py sans ecraser le vrai script
+        if let override = ProcessInfo.processInfo.environment["VOXA_BRIDGE_SCRIPT"] {
+            scriptPath = override
+        }
+        #endif
 
         let stream = bridge.transcribe(
             audioPath: project.audioFilePath,
@@ -280,27 +286,7 @@ final class TranscriptionListVM {
                     receivedResult = true
                     print("[ListVM] ← result: \(msg.segments.count) segments, langue=\(msg.language), total=\(String(format: "%.1f", msg.totalDurationSec))s")
 
-                    // Merger les segments consecutifs du meme speaker
-                    // (seulement si speaker non-nil, sinon on garde les segments separes)
-                    var mergedResults: [ResultSegment] = []
-                    for seg in msg.segments {
-                        if let last = mergedResults.last,
-                           let lastSpeaker = last.speaker, !lastSpeaker.isEmpty,
-                           let segSpeaker = seg.speaker, !segSpeaker.isEmpty,
-                           lastSpeaker == segSpeaker {
-                            mergedResults[mergedResults.count - 1] = ResultSegment(
-                                id: last.id,
-                                start: last.start,
-                                end: seg.end,
-                                text: last.text + " " + seg.text,
-                                speaker: last.speaker,
-                                avgLogprob: nil,
-                                noSpeechProb: nil
-                            )
-                        } else {
-                            mergedResults.append(seg)
-                        }
-                    }
+                    let mergedResults = Self.mergeConsecutiveSpeakerSegments(msg.segments)
                     print("[ListVM]   \(msg.segments.count) segments → \(mergedResults.count) apres fusion")
 
                     // Supprimer les anciens segments
@@ -404,6 +390,31 @@ final class TranscriptionListVM {
             currentProject = nil
             estimationService.reset()
         }
+    }
+
+    /// Fusionne les segments consecutifs du meme speaker
+    /// (seulement si speaker non-nil, sinon on garde les segments separes)
+    static func mergeConsecutiveSpeakerSegments(_ segments: [ResultSegment]) -> [ResultSegment] {
+        var merged: [ResultSegment] = []
+        for seg in segments {
+            if let last = merged.last,
+               let lastSpeaker = last.speaker, !lastSpeaker.isEmpty,
+               let segSpeaker = seg.speaker, !segSpeaker.isEmpty,
+               lastSpeaker == segSpeaker {
+                merged[merged.count - 1] = ResultSegment(
+                    id: last.id,
+                    start: last.start,
+                    end: seg.end,
+                    text: last.text + " " + seg.text,
+                    speaker: last.speaker,
+                    avgLogprob: nil,
+                    noSpeechProb: nil
+                )
+            } else {
+                merged.append(seg)
+            }
+        }
+        return merged
     }
 
     func cancelCurrent() {

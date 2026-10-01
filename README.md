@@ -129,9 +129,23 @@ The Xcode project is generated from `TranscriptionApp/project.yml` with [XcodeGe
 cd TranscriptionApp && xcodegen generate
 ```
 
+### Tests and benchmark
+
+```bash
+./scripts/test.sh            # Python + Swift unit tests (or: python | swift)
+```
+
+`scripts/bench/run_bench.py` measures transcription quality and speed on a private set of real recordings kept outside the repo (word error rate, speaker attribution, automatic speaker recognition, speed). See [scripts/bench/README.md](scripts/bench/README.md). Run it before and after any change to the models or the pipeline.
+
+To test the UI without running the models, launch a Debug build with the fake bridge (it replays a fictional meeting):
+
+```bash
+open --env VOXA_BRIDGE_SCRIPT="$PWD/scripts/dev/fake_bridge.py" build/DerivedData/Build/Products/Debug/Voxa.app
+```
+
 ### Releasing a new version
 
-1. In `TranscriptionApp/project.yml`, bump `MARKETING_VERSION` **and** `CURRENT_PROJECT_VERSION` (build number). Sparkle compares build numbers: if it does not increase, users never see the update. Then run `xcodegen generate` and commit.
+1. Run `./scripts/test.sh`. In `TranscriptionApp/project.yml`, bump `MARKETING_VERSION` **and** `CURRENT_PROJECT_VERSION` (build number). Sparkle compares build numbers: if it does not increase, users never see the update. Then run `xcodegen generate` and commit.
 2. Build, sign, notarize and generate the appcast:
 
    ```bash
@@ -191,12 +205,12 @@ Voxa uses a dual-track recording approach to avoid audio echo:
 
 ## CLI Script
 
-The `transcribe.py` script can also be used standalone from the command line:
+The Python scripts live in `TranscriptionApp/TranscriptionApp/Resources/` (single source, bundled in the app). `transcribe.py` can also be used standalone from the command line:
 
 ```bash
 # Using the venv created by Voxa
 source ~/Library/Application\ Support/Voxa/.venv/bin/activate
-python transcribe.py --audio recording.m4a --model large-v3-turbo --hf-token YOUR_TOKEN
+python TranscriptionApp/TranscriptionApp/Resources/transcribe.py --audio recording.m4a --model large-v3-turbo --hf-token YOUR_TOKEN
 ```
 
 ## License

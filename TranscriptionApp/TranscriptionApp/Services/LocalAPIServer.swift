@@ -88,7 +88,7 @@ final class LocalAPIServer {
 
     // MARK: - HTTP plumbing
 
-    private struct Request {
+    struct Request {
         let method: String
         let path: String
         let query: [String: String]
@@ -142,7 +142,7 @@ final class LocalAPIServer {
     }
 
     /// Retourne nil tant que la requete n'est pas complete.
-    private static func parse(_ data: Data) -> Request? {
+    static func parse(_ data: Data) -> Request? {
         let separator = Data("\r\n\r\n".utf8)
         guard let headerEnd = data.range(of: separator),
               let head = String(data: data[..<headerEnd.lowerBound], encoding: .utf8) else { return nil }

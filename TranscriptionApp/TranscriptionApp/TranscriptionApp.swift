@@ -11,6 +11,9 @@ struct TranscriptionApp: App {
     @AppStorage("setup_completed") private var setupCompleted = false
 
     let updaterController: SPUStandardUpdaterController
+
+    /// Vrai quand l'app sert d'hote aux tests unitaires
+    static let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     /// API locale pour le serveur MCP (Claude Code)
     let apiServer: LocalAPIServer
 
@@ -33,7 +36,10 @@ struct TranscriptionApp: App {
             at: storeURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
         )
-        let config = ModelConfiguration(url: storeURL)
+        // Base en memoire pendant les tests unitaires : ne jamais toucher la vraie
+        let config = Self.isRunningTests
+            ? ModelConfiguration(isStoredInMemoryOnly: true)
+            : ModelConfiguration(url: storeURL)
         self.modelContainer = try! ModelContainer(
             for: TranscriptionProject.self,
             configurations: config
@@ -42,7 +48,10 @@ struct TranscriptionApp: App {
         let listVM = TranscriptionListVM()
         self._listVM = State(initialValue: listVM)
         self.apiServer = LocalAPIServer(listVM: listVM, modelContainer: modelContainer)
-        apiServer.start()
+        // Pas d'API pendant les tests unitaires (l'app sert d'hote aux tests)
+        if !Self.isRunningTests {
+            apiServer.start()
+        }
 
         NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -62,6 +71,7 @@ struct TranscriptionApp: App {
                             recordingVM.modelContainer = modelContainer
                         }
                         .task {
+                            guard !Self.isRunningTests else { return }
                             // Silent re-check: if venv was deleted, go back to setup
                             await dependencyManager.checkAll()
                             if !dependencyManager.overallReady {
