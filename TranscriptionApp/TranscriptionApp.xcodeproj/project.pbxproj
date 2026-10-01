@@ -75,6 +75,7 @@
 		69E78EE3E6BF27450313E094 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6BD6777AD2FA3565D02FF689 /* Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enums.swift; sourceTree = "<group>"; };
 		72C4DBEDAAC2B7226BC5B0EA /* TranscriptionDetailVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionDetailVM.swift; sourceTree = "<group>"; };
+		78CB61B22816C722EC61B907 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		80BCDE67FA83A77EB688E3B3 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		8B8D07174F75A25BC11B62ED /* EstimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstimationService.swift; sourceTree = "<group>"; };
 		907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerColors.swift; sourceTree = "<group>"; };
@@ -247,6 +248,7 @@
 		FAE896EA683145EB8C1264CE /* TranscriptionApp */ = {
 			isa = PBXGroup;
 			children = (
+				78CB61B22816C722EC61B907 /* Info.plist */,
 				67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */,
 				F4EEB74CE13B508176D7E78C /* Models */,
 				C9021D231AB2D3D2A155C083 /* Resources */,
@@ -464,12 +466,10 @@
 				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TranscriptionApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -492,12 +492,10 @@
 				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TranscriptionApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://armanetpierre.github.io/Local-Transcription-Mac/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "Onrg6i4OYFeEFszu974HeE7wZk8F2p8o9ZkgaDvllhw=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
