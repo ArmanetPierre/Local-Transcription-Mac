@@ -2028,6 +2028,136 @@
           }
         }
       }
+    },
+    "Acknowledgements" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remerciements"
+          }
+        }
+      }
+    },
+    "Allowed folders: Claude Code can ask Voxa to transcribe files located in these folders." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossiers autorisés : Claude Code peut demander à Voxa de transcrire les fichiers situés dans ces dossiers."
+          }
+        }
+      }
+    },
+    "Add Folder..." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un dossier…"
+          }
+        }
+      }
+    },
+    "Allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser"
+          }
+        }
+      }
+    },
+    "Choose the folders whose recordings Claude Code may transcribe with Voxa." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez les dossiers dont Claude Code pourra faire transcrire les enregistrements par Voxa."
+          }
+        }
+      }
+    },
+    "Transcribe your meetings on your Mac, with speaker identification. Everything stays on this computer." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrivez vos réunions sur votre Mac, avec identification des intervenants. Tout reste sur cet ordinateur."
+          }
+        }
+      }
+    },
+    "Download the transcription models (about 1.6 GB, once)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger les modèles de transcription (environ 1,6 Go, une seule fois)"
+          }
+        }
+      }
+    },
+    "Optimize them for this Mac (a few minutes)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les optimiser pour ce Mac (quelques minutes)"
+          }
+        }
+      }
+    },
+    "No account, no internet needed afterwards" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun compte, plus besoin d'internet ensuite"
+          }
+        }
+      }
+    },
+    "You can leave this window open, it takes a few minutes." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez laisser cette fenêtre ouverte, cela prend quelques minutes."
+          }
+        }
+      }
+    },
+    "Download and prepare" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger et préparer"
+          }
+        }
+      }
+    },
+    "Download failed: %@. Check your internet connection and try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du téléchargement : %@. Vérifiez votre connexion internet et réessayez."
+          }
+        }
+      }
+    },
+    "Voxa is not allowed to read %@. Add this folder (or a parent) in Voxa > Settings > Claude Code (MCP) > Allowed folders, then retry." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voxa n'a pas le droit de lire %@. Ajoutez ce dossier (ou un dossier parent) dans Voxa > Réglages > Claude Code (MCP) > Dossiers autorisés, puis réessayez."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

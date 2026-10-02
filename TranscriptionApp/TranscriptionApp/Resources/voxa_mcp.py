@@ -9,8 +9,7 @@ Ce script ne fait que relayer les appels vers l'API locale de l'app
 (127.0.0.1, jeton dans ~/Library/Application Support/Voxa/api.json).
 Il n'a aucune dependance hors bibliotheque standard.
 
-Installation :
-    claude mcp add voxa --scope user -- python3 "~/Library/Application Support/Voxa/Scripts/voxa_mcp.py"
+Installation : copier la commande depuis Voxa > Reglages > Claude Code (MCP).
 """
 
 import json
@@ -26,7 +25,13 @@ SERVER_NAME = "voxa"
 SERVER_VERSION = "1.0.0"
 DEFAULT_PROTOCOL_VERSION = "2025-06-18"
 
-CONFIG_PATH = os.path.expanduser("~/Library/Application Support/Voxa/api.json")
+# api.json est ecrit par l'app dans son dossier de donnees, parent du dossier
+# Scripts ou vit ce script. Dans la version App Store (sandbox), ce dossier est
+# dans ~/Library/Containers/<app>/Data/... : le chemin relatif marche partout.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(os.path.dirname(_HERE), "api.json")
+if not os.path.exists(CONFIG_PATH):
+    CONFIG_PATH = os.path.expanduser("~/Library/Application Support/Voxa/api.json")
 DEFAULT_BUNDLE_ID = "com.pierre.Voxa"
 FINISHED_STATUSES = ("completed", "awaitingSpeakerNames", "failed")
 

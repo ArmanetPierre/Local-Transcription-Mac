@@ -41,22 +41,13 @@ final class DependencyManager {
 
     // MARK: - Standard Paths
 
-    static let appSupportDirectory: URL = {
-        let appSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!
-        let voxaDir = appSupport.appendingPathComponent("Voxa", isDirectory: true)
-        try? FileManager.default.createDirectory(at: voxaDir, withIntermediateDirectories: true)
-        return voxaDir
-    }()
+    static var appSupportDirectory: URL { AppPaths.appSupportDirectory }
 
     static let venvDirectory: URL = {
         appSupportDirectory.appendingPathComponent(".venv", isDirectory: true)
     }()
 
-    static let scriptsDirectory: URL = {
-        appSupportDirectory.appendingPathComponent("Scripts", isDirectory: true)
-    }()
+    static var scriptsDirectory: URL { AppPaths.scriptsDirectory }
 
     static let binDirectory: URL = {
         appSupportDirectory.appendingPathComponent("bin", isDirectory: true)

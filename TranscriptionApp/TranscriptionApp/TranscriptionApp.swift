@@ -1,4 +1,6 @@
+#if !APPSTORE
 import Sparkle
+#endif
 import SwiftData
 import SwiftUI
 
@@ -7,10 +9,15 @@ struct TranscriptionApp: App {
     let modelContainer: ModelContainer
     @State private var listVM: TranscriptionListVM
     @State private var recordingVM = RecordingVM()
+    #if APPSTORE
+    // Version App Store : moteur natif uniquement, mises a jour par l'App Store
+    @State private var nativeModels = NativeModels.shared
+    #else
     @State private var dependencyManager = DependencyManager()
     @AppStorage("setup_completed") private var setupCompleted = false
 
     let updaterController: SPUStandardUpdaterController
+    #endif
 
     /// Vrai quand l'app sert d'hote aux tests unitaires
     static let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -18,11 +25,13 @@ struct TranscriptionApp: App {
     let apiServer: LocalAPIServer
 
     init() {
+        #if !APPSTORE
         self.updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: !Self.isRunningTests,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
+        #endif
 
         // Stocker la base SwiftData dans le dossier Voxa (Application Support)
         // plutot que le defaut ~/Library/Application Support/default.store
@@ -45,9 +54,11 @@ struct TranscriptionApp: App {
             configurations: config
         )
 
+        #if !APPSTORE
         if !Self.isRunningTests {
             HuggingFaceToken.migrateFromUserDefaults()
         }
+        #endif
 
         let listVM = TranscriptionListVM()
         self._listVM = State(initialValue: listVM)
@@ -55,6 +66,9 @@ struct TranscriptionApp: App {
         // Pas d'API pendant les tests unitaires (l'app sert d'hote aux tests)
         if !Self.isRunningTests {
             apiServer.start()
+            #if APPSTORE
+            ScriptDeployment.deployMCPScript()
+            #endif
         }
 
         NotificationCenter.default.addObserver(
@@ -69,6 +83,22 @@ struct TranscriptionApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
+                #if APPSTORE
+                if nativeModels.isPrepared || nativeModels.hasDownloadedModels {
+                    ContentView(listVM: listVM)
+                        .onAppear {
+                            recordingVM.modelContainer = modelContainer
+                        }
+                        .task {
+                            guard !Self.isRunningTests else { return }
+                            listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
+                            // Apres une mise a jour, Core ML reprepare les modeles
+                            nativeModels.prepareInBackgroundIfNeeded()
+                        }
+                } else {
+                    ModelSetupView(models: nativeModels)
+                }
+                #else
                 if setupCompleted {
                     ContentView(listVM: listVM)
                         .onAppear {
@@ -90,12 +120,17 @@ struct TranscriptionApp: App {
                         setupCompleted = true
                     }
                 }
+                #endif
             }
         }
         .modelContainer(modelContainer)
 
         Settings {
+            #if APPSTORE
+            SettingsView()
+            #else
             SettingsView(updater: updaterController.updater)
+            #endif
         }
 
         MenuBarExtra {

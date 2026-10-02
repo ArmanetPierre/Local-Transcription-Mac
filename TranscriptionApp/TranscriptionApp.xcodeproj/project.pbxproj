@@ -7,19 +7,40 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		04B01DA97CFB01CB6A34D8F7 /* MeetingReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABDBEA29F9EEFDB034EEDDCD /* MeetingReportView.swift */; };
 		05B53E86F77CA5D095F9FB26 /* KnownVoicesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */; };
 		080FD2D439C1FD7EC9BBE8E4 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
+		09E400560BAE07A38117FCF5 /* KnownVoicesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */; };
 		0A5BFC0F17E1B505F8B2C575 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
+		0A7106848FF6C84F1F8EC3A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E78EE3E6BF27450313E094 /* SettingsView.swift */; };
+		0B47B807ACA8F027550E7248 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
 		0B7C47002B4458F30E439F1D /* SpeakerNameHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */; };
 		0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */ = {isa = PBXBuildFile; fileRef = 170DCEDA15AD1CCF6C976075 /* transcribe.py */; };
 		10B45E16BE9C94DA4B894D48 /* SpeakerColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */; };
+		114F63E38DBAFCC68841A15E /* ImportDropZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6642498EF0865E2C14763BB7 /* ImportDropZone.swift */; };
 		12C4652E1A8DEFF17FDA89FB /* Segment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9418716D2C8471290966B9 /* Segment.swift */; };
+		12F035DBA6FB64D1762D801C /* RecordingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2B580C657885EACEECF55F /* RecordingService.swift */; };
+		13D5944AD20E2313B6A81650 /* voxa_mcp.py in Resources */ = {isa = PBXBuildFile; fileRef = A55C6592DD1F605C1714D54A /* voxa_mcp.py */; };
+		15321AE32F84C987E3C5754F /* EstimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B8D07174F75A25BC11B62ED /* EstimationService.swift */; };
+		176F2EF40B5D58E75EBCA770 /* SpeakerColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */; };
+		1A2A6654D579C414292E365A /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84536B721B23F651C8B0547 /* SidebarView.swift */; };
 		1DC84E45136E6CC99E18B1B3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66178D29E0227C619444F7B9 /* Assets.xcassets */; };
+		21BF6F46B261AA3970012F57 /* LocalAPIServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107AC9DE024A2753A71F2647 /* LocalAPIServer.swift */; };
+		23E068E1689C41B634B269F7 /* ExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */; };
 		2986D0D1D0A890308F063357 /* TranscriptionDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6E880C1B3C8A5031714577 /* TranscriptionDetail.swift */; };
 		337E6B8D682D07A885F02CE3 /* SpeakerBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D07F8E509A640A74107F102B /* SpeakerBadge.swift */; };
+		339F3EE73E998C7F210EB69A /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */; };
+		345A2A23A36368327B1D1C02 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
+		34D4EA68D940635D803949DA /* Segment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9418716D2C8471290966B9 /* Segment.swift */; };
 		35AE795E493BA7677F1CF26C /* NativeEngineSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360C2584DB553334AA2D3E50 /* NativeEngineSupport.swift */; };
 		39073A26BDE5D56AC93A70E8 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B1CA4B4049A73379AF6AC0 /* SetupView.swift */; };
+		3A15A3D34193EDA50031C7E0 /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA76DCF90BAFF0C389EEA6B1 /* MarkdownContentView.swift */; };
+		3A6697530C3B77373A7054B9 /* TranscriptionDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6E880C1B3C8A5031714577 /* TranscriptionDetail.swift */; };
+		3AD07892274D747B77FF5532 /* SpeakerEmbeddingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */; };
 		3D5AA801F8401AB8A7F3D923 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 0E9B8C28B505D6866A033C71 /* Sparkle */; };
+		3DA8DEE136CC4CD39E074747 /* TranscriptionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */; };
+		3E866AE13E074880775D6596 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */; };
+		41EA02BC3139D6598862EE7E /* MeetingReportExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9379A2FE83E8FFDE86BCD946 /* MeetingReportExporter.swift */; };
 		427958DA2F4B9EF77AF9D220 /* AudioPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 094C312805FEE4686429D8DA /* AudioPlayerBar.swift */; };
 		451119C4A9331D26D37F240D /* SegmentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB720869A61DD6A915DCC9A0 /* SegmentRow.swift */; };
 		4518D982F7BD448E21B88A5B /* TranscriptionDetailVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C4DBEDAAC2B7226BC5B0EA /* TranscriptionDetailVM.swift */; };
@@ -31,35 +52,64 @@
 		51E21CF3249948E37EDA9438 /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3025D8556E3F988DF702579 /* OllamaService.swift */; };
 		5495EED2D5E0286340E1805E /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */; };
 		553B23A32B0BCC47E5538E58 /* PythonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AED3012F64F96210ADF36451 /* PythonBridge.swift */; };
+		5BEE4598B9739BB5BDC9D56B /* TranscriptionListVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */; };
+		6178E420EE7FBD9BED49A271 /* TranscriptionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */; };
+		65D28583172CEE23162952BA /* SpeakerSynthesisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FB6E5DA301471CD4021785 /* SpeakerSynthesisView.swift */; };
+		68C6BCD9703F2C5C14FFB280 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */; };
+		6DAABF2C7B1786B4A6FACFB9 /* SpeakerBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D07F8E509A640A74107F102B /* SpeakerBadge.swift */; };
+		6E54D7703A75468FAB462E64 /* SpeakerNameHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */; };
+		7020C52FCBC8A480420FCEC6 /* PythonMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E84D06986052062D9F4507 /* PythonMessage.swift */; };
+		7558A42C94F808FEEAA0F6AE /* NativeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D77ED072968E6CFC5B8CD4E /* NativeModels.swift */; };
+		7779D6BB17E326CCEB5D6752 /* VoxaEngine in Frameworks */ = {isa = PBXBuildFile; productRef = C1AA3F2287FAED5B8FDDBBBC /* VoxaEngine */; };
 		78BC99D8B5D0803BA9460945 /* PythonMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E84D06986052062D9F4507 /* PythonMessage.swift */; };
-		83903C9AF3B1296CF483E685 /* voxa_mcp.cpython-314.pyc in Resources */ = {isa = PBXBuildFile; fileRef = 16DD4AD2076EC192DBBBB341 /* voxa_mcp.cpython-314.pyc */; };
+		81EA8D3E62AA01D3A622069C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4652381313FAD80AED4548ED /* PrivacyInfo.xcprivacy */; };
+		873980B52C85C95722466A26 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6777AD2FA3565D02FF689 /* Enums.swift */; };
+		8E9516E94EEFAEDA824FEBF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */; };
 		903EF381847DB4CDFA36B2E0 /* transcribe_bridge.py in Resources */ = {isa = PBXBuildFile; fileRef = A67667008E852A14411C763E /* transcribe_bridge.py */; };
 		91602B262CC27865048F1F8F /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CF5D4E00F970ACAFF82C17 /* AudioService.swift */; };
+		937B87F84D69F35AFE278CF0 /* ProgressOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0B33D81C1FCCAAA8B6F782 /* ProgressOverlay.swift */; };
 		98D8AE2316AE00034252D696 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */; };
+		9C9592A3A29D12546377F6AF /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4DAE9F2493EC17B7EE102A /* ExportService.swift */; };
 		9CA1E76904330E3940312631 /* SpeakerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DFDC3498EA86E95847A062 /* SpeakerSetupView.swift */; };
 		9D412DA9327F05F9669DD177 /* ImportDropZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6642498EF0865E2C14763BB7 /* ImportDropZone.swift */; };
+		A0C7A238199AF38FEEE764E4 /* SegmentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB720869A61DD6A915DCC9A0 /* SegmentRow.swift */; };
 		A0E60C124AEB9C9F7192092D /* TranscriptionAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136FC1A66BE2FEFDC52B2C40 /* TranscriptionAppTests.swift */; };
+		A4DCE284EE496F586833DA57 /* RecordingVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3311BBB67E780B3E7E6F5CF /* RecordingVM.swift */; };
+		A7247E6C661A6D89D893E022 /* InProcessEngineBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108592F4B7B576F1160751F6 /* InProcessEngineBridge.swift */; };
 		A867C9032D58A323804A84EC /* LocalAPIServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107AC9DE024A2753A71F2647 /* LocalAPIServer.swift */; };
+		AE470269E85CC63CB75F7D48 /* RecordingMenuBarSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7324CF500A9366C2D747405 /* RecordingMenuBarSection.swift */; };
 		AFBF379200D40DF742370FAF /* TranscriptionListVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */; };
+		AFC8990484EC49B0AF23125C /* AcknowledgementsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C024F93A1C089B57C96AC41E /* AcknowledgementsSection.swift */; };
+		B0979636B876411F17607A8D /* FolderAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F174CC025405217CAAA2086 /* FolderAccess.swift */; };
+		B7123A729036905F2081CA6E /* TranscriptionDetailVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C4DBEDAAC2B7226BC5B0EA /* TranscriptionDetailVM.swift */; };
+		B7EACA6CBB67738F40DDCB90 /* AcknowledgementsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C024F93A1C089B57C96AC41E /* AcknowledgementsSection.swift */; };
 		BCFA801A03ED616AAB6AC770 /* RecordingVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3311BBB67E780B3E7E6F5CF /* RecordingVM.swift */; };
+		C22E7F21D2D1DED6D53EEF3F /* AudioPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 094C312805FEE4686429D8DA /* AudioPlayerBar.swift */; };
 		C2647510E97B51A5E67A7268 /* SpeakerEmbeddingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */; };
 		C33B01E3D024418F497F1811 /* voxa_mcp.py in Resources */ = {isa = PBXBuildFile; fileRef = A55C6592DD1F605C1714D54A /* voxa_mcp.py */; };
 		C3E677302429CA54403C315E /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4DAE9F2493EC17B7EE102A /* ExportService.swift */; };
 		C41B34FEBDEE501329959424 /* TranscriptionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */; };
 		C5E727B8017DF924131E27F2 /* RecordingMenuBarSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7324CF500A9366C2D747405 /* RecordingMenuBarSection.swift */; };
+		C6A0DB5DD6F57DF6B4CB45A8 /* TimeFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2BCBA095CF1CD3704DBA604 /* TimeFormatting.swift */; };
+		C8EB795CBC5756427704889A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3025D8556E3F988DF702579 /* OllamaService.swift */; };
+		D3CECD35A9E058941AC1B816 /* ScriptDeployment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7361E1F76D472DDD0657164B /* ScriptDeployment.swift */; };
 		D6E143177F7E59F557750D07 /* ExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */; };
 		DAE1468C74895C14F40E4BD6 /* ProgressOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0B33D81C1FCCAAA8B6F782 /* ProgressOverlay.swift */; };
+		DBAC996177A221BFA5E011E3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66178D29E0227C619444F7B9 /* Assets.xcassets */; };
 		DCF1DCF2D17A52C3FA12A5FB /* EngineSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAC878DC98F8C7149DCDCFD /* EngineSection.swift */; };
 		DD972A1193A3A09F80E1004D /* RecordingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2B580C657885EACEECF55F /* RecordingService.swift */; };
 		E0661B84061C89A15F3D5C5F /* MeetingReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABDBEA29F9EEFDB034EEDDCD /* MeetingReportView.swift */; };
 		E08E18113824A9E89AEBF25C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E78EE3E6BF27450313E094 /* SettingsView.swift */; };
 		E589DBEB8262AA330FB1778D /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BCDE67FA83A77EB688E3B3 /* MenuBarView.swift */; };
+		E776525A504EF954566F8461 /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CF5D4E00F970ACAFF82C17 /* AudioService.swift */; };
 		EA386D7E91E7E93D153A5CAD /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84536B721B23F651C8B0547 /* SidebarView.swift */; };
 		EB871C9EE4048AB823D06039 /* TranscriptionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */; };
+		EE9714FA856E2C5995C01168 /* SpeakerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DFDC3498EA86E95847A062 /* SpeakerSetupView.swift */; };
 		F06A7AD85564321ECFC2499E /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA76DCF90BAFF0C389EEA6B1 /* MarkdownContentView.swift */; };
+		F83C29A7C64002812265659B /* ModelSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D264CFE1A9A092DE4E4C0AF5 /* ModelSetupView.swift */; };
 		F8D40CA15321DE0F74601450 /* DependencyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8F9BF1EF2EF3989F7D6B1B3 /* DependencyManager.swift */; };
+		FBA8406C26E6737ABF53D4D9 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BCDE67FA83A77EB688E3B3 /* MenuBarView.swift */; };
 		FCC5DB360A4E91451293BCE6 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6777AD2FA3565D02FF689 /* Enums.swift */; };
-		FD2C44C5719BF09C929F8CBE /* transcribe_bridge.cpython-314.pyc in Resources */ = {isa = PBXBuildFile; fileRef = 9377562DF27AAB855B559411 /* transcribe_bridge.cpython-314.pyc */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,16 +128,21 @@
 		094C312805FEE4686429D8DA /* AudioPlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerBar.swift; sourceTree = "<group>"; };
 		0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerNameHistory.swift; sourceTree = "<group>"; };
 		107AC9DE024A2753A71F2647 /* LocalAPIServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAPIServer.swift; sourceTree = "<group>"; };
+		108592F4B7B576F1160751F6 /* InProcessEngineBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InProcessEngineBridge.swift; sourceTree = "<group>"; };
 		136FC1A66BE2FEFDC52B2C40 /* TranscriptionAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionAppTests.swift; sourceTree = "<group>"; };
 		1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		16DD4AD2076EC192DBBBB341 /* voxa_mcp.cpython-314.pyc */ = {isa = PBXFileReference; path = "voxa_mcp.cpython-314.pyc"; sourceTree = "<group>"; };
 		170DCEDA15AD1CCF6C976075 /* transcribe.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = transcribe.py; sourceTree = "<group>"; };
 		29DFDC3498EA86E95847A062 /* SpeakerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerSetupView.swift; sourceTree = "<group>"; };
+		2F174CC025405217CAAA2086 /* FolderAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderAccess.swift; sourceTree = "<group>"; };
 		360C2584DB553334AA2D3E50 /* NativeEngineSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeEngineSupport.swift; sourceTree = "<group>"; };
 		37E84D06986052062D9F4507 /* PythonMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PythonMessage.swift; sourceTree = "<group>"; };
+		3AE8D8FE5D849F007EE9A97E /* VoxaEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = VoxaEngine; path = ../Packages/VoxaEngine; sourceTree = SOURCE_ROOT; };
 		3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3F8719027DDFC0A35AE5DCC2 /* TranscriptionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionRow.swift; sourceTree = "<group>"; };
 		42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSheet.swift; sourceTree = "<group>"; };
+		4652381313FAD80AED4548ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		4BDD1A49C82078A04A25DCBE /* VoxaAppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxaAppStore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceToken.swift; sourceTree = "<group>"; };
 		5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerEmbeddingStore.swift; sourceTree = "<group>"; };
 		59B1CA4B4049A73379AF6AC0 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
@@ -97,12 +152,13 @@
 		67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionApp.swift; sourceTree = "<group>"; };
 		69E78EE3E6BF27450313E094 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6BD6777AD2FA3565D02FF689 /* Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enums.swift; sourceTree = "<group>"; };
+		6D77ED072968E6CFC5B8CD4E /* NativeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeModels.swift; sourceTree = "<group>"; };
 		72C4DBEDAAC2B7226BC5B0EA /* TranscriptionDetailVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionDetailVM.swift; sourceTree = "<group>"; };
+		7361E1F76D472DDD0657164B /* ScriptDeployment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptDeployment.swift; sourceTree = "<group>"; };
 		78CB61B22816C722EC61B907 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		80BCDE67FA83A77EB688E3B3 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		8B8D07174F75A25BC11B62ED /* EstimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstimationService.swift; sourceTree = "<group>"; };
 		907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerColors.swift; sourceTree = "<group>"; };
-		9377562DF27AAB855B559411 /* transcribe_bridge.cpython-314.pyc */ = {isa = PBXFileReference; path = "transcribe_bridge.cpython-314.pyc"; sourceTree = "<group>"; };
 		9379A2FE83E8FFDE86BCD946 /* MeetingReportExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReportExporter.swift; sourceTree = "<group>"; };
 		A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionListVM.swift; sourceTree = "<group>"; };
 		A55C6592DD1F605C1714D54A /* voxa_mcp.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = voxa_mcp.py; sourceTree = "<group>"; };
@@ -114,10 +170,12 @@
 		ABDBEA29F9EEFDB034EEDDCD /* MeetingReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReportView.swift; sourceTree = "<group>"; };
 		AED3012F64F96210ADF36451 /* PythonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PythonBridge.swift; sourceTree = "<group>"; };
 		B7324CF500A9366C2D747405 /* RecordingMenuBarSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingMenuBarSection.swift; sourceTree = "<group>"; };
+		C024F93A1C089B57C96AC41E /* AcknowledgementsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcknowledgementsSection.swift; sourceTree = "<group>"; };
 		C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionProject.swift; sourceTree = "<group>"; };
 		CA76DCF90BAFF0C389EEA6B1 /* MarkdownContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContentView.swift; sourceTree = "<group>"; };
 		CC6E880C1B3C8A5031714577 /* TranscriptionDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionDetail.swift; sourceTree = "<group>"; };
 		D07F8E509A640A74107F102B /* SpeakerBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerBadge.swift; sourceTree = "<group>"; };
+		D264CFE1A9A092DE4E4C0AF5 /* ModelSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSetupView.swift; sourceTree = "<group>"; };
 		D344AC76C3DE725042CAE651 /* requirements.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = requirements.txt; sourceTree = "<group>"; };
 		D3CF5D4E00F970ACAFF82C17 /* AudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioService.swift; sourceTree = "<group>"; };
 		D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownVoicesSection.swift; sourceTree = "<group>"; };
@@ -132,6 +190,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		64DA4FC8FFEA383455B7C61C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7779D6BB17E326CCEB5D6752 /* VoxaEngine in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B1C7728C50499D742B22C318 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -143,6 +209,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		399C20B3119EDD477584CB23 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				3AE8D8FE5D849F007EE9A97E /* VoxaEngine */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
 		5664C3FF426302C98FCDA2FC /* TranscriptionAppTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -181,6 +255,7 @@
 			children = (
 				A7B1C367517376A90C77C837 /* TranscriptionApp.app */,
 				0882026AF22A9DF939CD51DC /* TranscriptionAppTests.xctest */,
+				4BDD1A49C82078A04A25DCBE /* VoxaAppStore.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -202,18 +277,10 @@
 			path = Import;
 			sourceTree = "<group>";
 		};
-		B89D1B952A94D5117EA8B4CC /* __pycache__ */ = {
-			isa = PBXGroup;
-			children = (
-				9377562DF27AAB855B559411 /* transcribe_bridge.cpython-314.pyc */,
-				16DD4AD2076EC192DBBBB341 /* voxa_mcp.cpython-314.pyc */,
-			);
-			path = __pycache__;
-			sourceTree = "<group>";
-		};
 		C2C3E3B91FDE93D923301C1C /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */,
 				8B8D07174F75A25BC11B62ED /* EstimationService.swift */,
 				52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */,
 				907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */,
@@ -234,7 +301,6 @@
 				170DCEDA15AD1CCF6C976075 /* transcribe.py */,
 				F4886B6A2C8533BF2674052B /* TranscriptionApp.entitlements */,
 				A55C6592DD1F605C1714D54A /* voxa_mcp.py */,
-				B89D1B952A94D5117EA8B4CC /* __pycache__ */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -242,6 +308,7 @@
 		D092914D86F694294706CB2E /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C024F93A1C089B57C96AC41E /* AcknowledgementsSection.swift */,
 				3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */,
 				5DAC878DC98F8C7149DCDCFD /* EngineSection.swift */,
 				42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */,
@@ -254,6 +321,19 @@
 				7A07BC97D8826D85B8CCA926 /* Sidebar */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		DC8B2C29380B2385EEC3EF17 /* AppStore */ = {
+			isa = PBXGroup;
+			children = (
+				2F174CC025405217CAAA2086 /* FolderAccess.swift */,
+				108592F4B7B576F1160751F6 /* InProcessEngineBridge.swift */,
+				D264CFE1A9A092DE4E4C0AF5 /* ModelSetupView.swift */,
+				6D77ED072968E6CFC5B8CD4E /* NativeModels.swift */,
+				4652381313FAD80AED4548ED /* PrivacyInfo.xcprivacy */,
+				7361E1F76D472DDD0657164B /* ScriptDeployment.swift */,
+			);
+			path = AppStore;
 			sourceTree = "<group>";
 		};
 		F3A5DF4678E2D49BF0F8E2FF /* Services */ = {
@@ -298,6 +378,7 @@
 			children = (
 				78CB61B22816C722EC61B907 /* Info.plist */,
 				67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */,
+				DC8B2C29380B2385EEC3EF17 /* AppStore */,
 				F4EEB74CE13B508176D7E78C /* Models */,
 				C9021D231AB2D3D2A155C083 /* Resources */,
 				F3A5DF4678E2D49BF0F8E2FF /* Services */,
@@ -311,6 +392,7 @@
 		FCA295BCBB620394B9A809B5 = {
 			isa = PBXGroup;
 			children = (
+				399C20B3119EDD477584CB23 /* Packages */,
 				FAE896EA683145EB8C1264CE /* TranscriptionApp */,
 				5664C3FF426302C98FCDA2FC /* TranscriptionAppTests */,
 				6BEBA3A13D5D22F68E681D21 /* Products */,
@@ -359,6 +441,26 @@
 			productReference = 0882026AF22A9DF939CD51DC /* TranscriptionAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		B2DB354470404FD6A655FA09 /* VoxaAppStore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F40309F0BA66D655A91D9EED /* Build configuration list for PBXNativeTarget "VoxaAppStore" */;
+			buildPhases = (
+				97AEF4A30A5B0F9054F3CF6C /* Sources */,
+				ABC75B3538D5AFA4E33CDB0D /* Resources */,
+				64DA4FC8FFEA383455B7C61C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VoxaAppStore;
+			packageProductDependencies = (
+				C1AA3F2287FAED5B8FDDBBBC /* VoxaEngine */,
+			);
+			productName = VoxaAppStore;
+			productReference = 4BDD1A49C82078A04A25DCBE /* VoxaAppStore.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -368,6 +470,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					B2DB354470404FD6A655FA09 = {
+						DevelopmentTeam = C3A57SQ939;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = FCDE4AA45A0FF8B23AA9241F /* Build configuration list for PBXProject "TranscriptionApp" */;
@@ -382,6 +488,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9FE1F0871F3E828A37B2B6A0 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				297937ED74D8285E60FA2933 /* XCLocalSwiftPackageReference "../Packages/VoxaEngine" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6BEBA3A13D5D22F68E681D21 /* Products */;
@@ -390,6 +497,7 @@
 			targets = (
 				3081C045FE85BABE36A67A45 /* TranscriptionApp */,
 				641F28534D769C2EC7DA2BAB /* TranscriptionAppTests */,
+				B2DB354470404FD6A655FA09 /* VoxaAppStore */,
 			);
 		};
 /* End PBXProject section */
@@ -403,10 +511,19 @@
 				5495EED2D5E0286340E1805E /* Localizable.xcstrings in Resources */,
 				45676C081D89436CE2A825AD /* requirements.txt in Resources */,
 				0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */,
-				FD2C44C5719BF09C929F8CBE /* transcribe_bridge.cpython-314.pyc in Resources */,
 				903EF381847DB4CDFA36B2E0 /* transcribe_bridge.py in Resources */,
-				83903C9AF3B1296CF483E685 /* voxa_mcp.cpython-314.pyc in Resources */,
 				C33B01E3D024418F497F1811 /* voxa_mcp.py in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABC75B3538D5AFA4E33CDB0D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DBAC996177A221BFA5E011E3 /* Assets.xcassets in Resources */,
+				3E866AE13E074880775D6596 /* Localizable.xcstrings in Resources */,
+				81EA8D3E62AA01D3A622069C /* PrivacyInfo.xcprivacy in Resources */,
+				13D5944AD20E2313B6A81650 /* voxa_mcp.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -435,10 +552,64 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		97AEF4A30A5B0F9054F3CF6C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B7EACA6CBB67738F40DDCB90 /* AcknowledgementsSection.swift in Sources */,
+				339F3EE73E998C7F210EB69A /* AppPaths.swift in Sources */,
+				C22E7F21D2D1DED6D53EEF3F /* AudioPlayerBar.swift in Sources */,
+				E776525A504EF954566F8461 /* AudioService.swift in Sources */,
+				8E9516E94EEFAEDA824FEBF2 /* ContentView.swift in Sources */,
+				873980B52C85C95722466A26 /* Enums.swift in Sources */,
+				15321AE32F84C987E3C5754F /* EstimationService.swift in Sources */,
+				9C9592A3A29D12546377F6AF /* ExportService.swift in Sources */,
+				23E068E1689C41B634B269F7 /* ExportSheet.swift in Sources */,
+				B0979636B876411F17607A8D /* FolderAccess.swift in Sources */,
+				0B47B807ACA8F027550E7248 /* HuggingFaceToken.swift in Sources */,
+				114F63E38DBAFCC68841A15E /* ImportDropZone.swift in Sources */,
+				A7247E6C661A6D89D893E022 /* InProcessEngineBridge.swift in Sources */,
+				09E400560BAE07A38117FCF5 /* KnownVoicesSection.swift in Sources */,
+				21BF6F46B261AA3970012F57 /* LocalAPIServer.swift in Sources */,
+				3A15A3D34193EDA50031C7E0 /* MarkdownContentView.swift in Sources */,
+				41EA02BC3139D6598862EE7E /* MeetingReportExporter.swift in Sources */,
+				04B01DA97CFB01CB6A34D8F7 /* MeetingReportView.swift in Sources */,
+				FBA8406C26E6737ABF53D4D9 /* MenuBarView.swift in Sources */,
+				F83C29A7C64002812265659B /* ModelSetupView.swift in Sources */,
+				7558A42C94F808FEEAA0F6AE /* NativeModels.swift in Sources */,
+				C8EB795CBC5756427704889A /* OllamaService.swift in Sources */,
+				937B87F84D69F35AFE278CF0 /* ProgressOverlay.swift in Sources */,
+				7020C52FCBC8A480420FCEC6 /* PythonMessage.swift in Sources */,
+				AE470269E85CC63CB75F7D48 /* RecordingMenuBarSection.swift in Sources */,
+				12F035DBA6FB64D1762D801C /* RecordingService.swift in Sources */,
+				A4DCE284EE496F586833DA57 /* RecordingVM.swift in Sources */,
+				D3CECD35A9E058941AC1B816 /* ScriptDeployment.swift in Sources */,
+				34D4EA68D940635D803949DA /* Segment.swift in Sources */,
+				A0C7A238199AF38FEEE764E4 /* SegmentRow.swift in Sources */,
+				0A7106848FF6C84F1F8EC3A8 /* SettingsView.swift in Sources */,
+				1A2A6654D579C414292E365A /* SidebarView.swift in Sources */,
+				6DAABF2C7B1786B4A6FACFB9 /* SpeakerBadge.swift in Sources */,
+				176F2EF40B5D58E75EBCA770 /* SpeakerColors.swift in Sources */,
+				3AD07892274D747B77FF5532 /* SpeakerEmbeddingStore.swift in Sources */,
+				6E54D7703A75468FAB462E64 /* SpeakerNameHistory.swift in Sources */,
+				EE9714FA856E2C5995C01168 /* SpeakerSetupView.swift in Sources */,
+				65D28583172CEE23162952BA /* SpeakerSynthesisView.swift in Sources */,
+				C6A0DB5DD6F57DF6B4CB45A8 /* TimeFormatting.swift in Sources */,
+				6178E420EE7FBD9BED49A271 /* TranscriptionApp.swift in Sources */,
+				3A6697530C3B77373A7054B9 /* TranscriptionDetail.swift in Sources */,
+				B7123A729036905F2081CA6E /* TranscriptionDetailVM.swift in Sources */,
+				5BEE4598B9739BB5BDC9D56B /* TranscriptionListVM.swift in Sources */,
+				345A2A23A36368327B1D1C02 /* TranscriptionProject.swift in Sources */,
+				3DA8DEE136CC4CD39E074747 /* TranscriptionRow.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9E67BC4977BD9727E0582C72 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFC8990484EC49B0AF23125C /* AcknowledgementsSection.swift in Sources */,
+				68C6BCD9703F2C5C14FFB280 /* AppPaths.swift in Sources */,
 				427958DA2F4B9EF77AF9D220 /* AudioPlayerBar.swift in Sources */,
 				91602B262CC27865048F1F8F /* AudioService.swift in Sources */,
 				98D8AE2316AE00034252D696 /* ContentView.swift in Sources */,
@@ -520,6 +691,37 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.Voxa.tests;
 				SDKROOT = macosx;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Voxa.app/Contents/MacOS/Voxa";
+			};
+			name = Debug;
+		};
+		0B5D24A8791CFCCB5BD7A82C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TranscriptionApp/AppStore/AppStore.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C3A57SQ939;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TranscriptionApp/AppStore/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Pierre Armanet";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.voxa.appstore;
+				PRODUCT_MODULE_NAME = Voxa;
+				PRODUCT_NAME = Voxa;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) APPSTORE";
 			};
 			name = Debug;
 		};
@@ -717,6 +919,37 @@
 			};
 			name = Release;
 		};
+		EB6FCC098AB11C132F379C6B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TranscriptionApp/AppStore/AppStore.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C3A57SQ939;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TranscriptionApp/AppStore/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Voxa;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Pierre Armanet";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voxa uses the microphone to record your voice during meetings.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.voxa.appstore;
+				PRODUCT_MODULE_NAME = Voxa;
+				PRODUCT_NAME = Voxa;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) APPSTORE";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -738,6 +971,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		F40309F0BA66D655A91D9EED /* Build configuration list for PBXNativeTarget "VoxaAppStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B5D24A8791CFCCB5BD7A82C /* Debug */,
+				EB6FCC098AB11C132F379C6B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		FCDE4AA45A0FF8B23AA9241F /* Build configuration list for PBXProject "TranscriptionApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -748,6 +990,13 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		297937ED74D8285E60FA2933 /* XCLocalSwiftPackageReference "../Packages/VoxaEngine" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/VoxaEngine;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		9FE1F0871F3E828A37B2B6A0 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -765,6 +1014,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9FE1F0871F3E828A37B2B6A0 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		C1AA3F2287FAED5B8FDDBBBC /* VoxaEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VoxaEngine;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

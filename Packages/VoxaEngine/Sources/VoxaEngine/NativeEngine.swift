@@ -124,19 +124,34 @@ public final class NativeEngine {
                 emit(.progress(step: "transcription", percent: whisperKit.progress.fractionCompleted * 100))
             }
         }
+        // Langue : imposee, sinon detectee sur plusieurs passages de l'enregistrement
+        var language = options.language
+        if language == nil {
+            language = try await Self.detectLanguage(whisperKit, audio: audio)
+            emit(.log(level: "info", message: "Langue detectee: \(language ?? "?")"))
+        }
+
         // Memes reglages que whisperkit-cli. En particulier, pas de seuil sur la
         // confiance du premier mot (defaut -1.5 de l'API) : il fait sauter des
         // fenetres entieres de parole conversationnelle, jugees "silencieuses".
-        let decoding = DecodingOptions(
+        var decoding = DecodingOptions(
             verbose: false,
             task: .transcribe,
-            language: options.language,
-            usePrefillPrompt: options.language != nil,
+            language: language,
+            usePrefillPrompt: true,
+            detectLanguage: language == nil,
             wordTimestamps: true,
             firstTokenLogProbThreshold: nil,
             concurrentWorkerCount: 4,
             chunkingStrategy: .vad
         )
+        // Amorce ponctuee : WhisperKit decode chaque morceau (VAD) sans le texte
+        // precedent ; sans amorce, Whisper perd souvent ponctuation et majuscules
+        // et deforme des mots ("il ya", "elle est allee a l'est" pour "elle essaie").
+        if let prompt = language.flatMap({ Self.punctuationPrompts[$0] }), let tokenizer = whisperKit.tokenizer {
+            decoding.promptTokens = tokenizer.encode(text: " " + prompt)
+                .filter { $0 < tokenizer.specialTokens.specialTokenBegin }
+        }
         let results: [TranscriptionResult]
         do {
             results = try await whisperKit.transcribe(audioArray: audio, decodeOptions: decoding)
@@ -147,6 +162,14 @@ public final class NativeEngine {
         }
         progressTask.cancel()
         let merged = TranscriptionUtilities.mergeTranscriptionResults(results)
+        if ProcessInfo.processInfo.environment["VOXA_DEBUG_WORDS"] != nil {
+            for segment in merged.segments.prefix(3) {
+                FileHandle.standardError.write(Data("SEG \(segment.text.debugDescription)\n".utf8))
+                for word in (segment.words ?? []).prefix(25) {
+                    FileHandle.standardError.write(Data("  W \(word.word.debugDescription)\n".utf8))
+                }
+            }
+        }
         var segments = merged.segments.map { segment in
             TranscriptSegment(
                 start: Double(segment.start),
@@ -217,6 +240,33 @@ public final class NativeEngine {
             speakerMatches: matches,
             speakerMatchScores: matchScores
         )))
+    }
+
+    /// Phrases d'amorce ponctuees, par langue
+    static let punctuationPrompts: [String: String] = [
+        "fr": "Bonjour. Voici la transcription de la réunion, avec la ponctuation.",
+        "en": "Hello. Here is the transcript of the meeting, with punctuation.",
+        "es": "Hola. Esta es la transcripción de la reunión, con puntuación.",
+        "de": "Hallo. Hier ist das Protokoll der Besprechung, mit Zeichensetzung.",
+        "it": "Ciao. Ecco la trascrizione della riunione, con la punteggiatura.",
+        "pt": "Olá. Esta é a transcrição da reunião, com pontuação.",
+        "nl": "Hallo. Hier is het verslag van de vergadering, met interpunctie.",
+    ]
+
+    /// Langue dominante : probabilites cumulees sur 3 passages de 30 s (debut,
+    /// milieu, fin), pour ne pas se fier au seul debut d'une reunion.
+    static func detectLanguage(_ whisperKit: WhisperKit, audio: [Float]) async throws -> String? {
+        let window = 30 * WhisperKit.sampleRate
+        let starts: [Int] = audio.count <= window
+            ? [0]
+            : [0, audio.count / 2 - window / 2, max(0, audio.count - window - WhisperKit.sampleRate * 5)]
+        var totals: [String: Float] = [:]
+        for start in starts {
+            let slice = Array(audio[start..<min(start + window, audio.count)])
+            let (_, probabilities) = try await whisperKit.detectLangauge(audioArray: slice)
+            for (code, probability) in probabilities { totals[code, default: 0] += probability }
+        }
+        return totals.max { $0.value < $1.value }?.key
     }
 
     static func label(_ id: Int) -> String {

@@ -41,7 +41,7 @@ final class NativeEngineSupport {
 
     /// Dossier stable : Core ML prepare les modeles pour la puce une fois par emplacement
     static var modelsDirectory: URL {
-        DependencyManager.appSupportDirectory.appendingPathComponent("Models", isDirectory: true)
+        AppPaths.modelsDirectory
     }
 
     private static var preparedMarker: URL {

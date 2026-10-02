@@ -1,10 +1,16 @@
+#if !APPSTORE
 import Sparkle
+#endif
 import SwiftUI
 
 struct SettingsView: View {
+    #if !APPSTORE
     /// Updater de l'app (deja demarre). SwiftUI recree cette vue a chaque
     /// rafraichissement de l'app : rien de couteux ne doit etre fait dans init.
     let updater: SPUUpdater
+    #else
+    @State private var folderAccess = FolderAccess.shared
+    #endif
 
     @State private var hfToken = ""
     @AppStorage("default_model") private var defaultModel = WhisperModel.largeV3Turbo.rawValue
@@ -21,12 +27,17 @@ struct SettingsView: View {
     @State private var mcpCommandCopied = false
 
     private var claudeMCPCommand: String {
+        #if APPSTORE
+        let python = "python3"
+        #else
         let python = FileManager.default.fileExists(atPath: pythonPath) ? pythonPath : "python3"
+        #endif
         return "claude mcp add voxa --scope user -- \"\(python)\" \"\(LocalAPIServer.mcpScriptPath)\""
     }
 
     var body: some View {
         Form {
+            #if !APPSTORE
             Section("HuggingFace") {
                 SecureField("HuggingFace Token", text: $hfToken)
                     .onChange(of: hfToken) { _, newValue in HuggingFaceToken.value = newValue }
@@ -36,18 +47,24 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            #endif
+
             Section("Transcription") {
+                #if !APPSTORE
                 Picker("Default model", selection: $defaultModel) {
                     ForEach(WhisperModel.allCases) { model in
                         Text(model.displayName).tag(model.rawValue)
                     }
                 }
+                #endif
 
                 Toggle("Default diarization", isOn: $defaultDiarization)
                     .help("Automatically identify different speakers")
             }
 
+            #if !APPSTORE
             EngineSection()
+            #endif
 
             Section("LLM Summary (Ollama)") {
                 Picker("Ollama Model", selection: $ollamaModel) {
@@ -119,8 +136,36 @@ struct SettingsView: View {
                 Text("Voxa must be running for Claude to use it (it is opened automatically if needed).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                #if APPSTORE
+                // Sandbox : Claude ne peut faire transcrire que les dossiers autorises ici
+                Text("Allowed folders: Claude Code can ask Voxa to transcribe files located in these folders.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ForEach(folderAccess.folders, id: \.self) { folder in
+                    HStack {
+                        Image(systemName: "folder")
+                        Text(folder.path)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Spacer()
+                        Button(role: .destructive) {
+                            folderAccess.remove(folder)
+                        } label: {
+                            Image(systemName: "minus.circle")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .font(.caption)
+                }
+                Button("Add Folder...") {
+                    folderAccess.addFolder()
+                }
+                .controlSize(.small)
+                #endif
             }
 
+            #if !APPSTORE
             Section("Updates") {
                 Toggle("Automatically check for updates", isOn: Binding(
                     get: { updater.automaticallyChecksForUpdates },
@@ -184,12 +229,17 @@ struct SettingsView: View {
                     .controlSize(.small)
                 }
             }
+            #endif
+
+            AcknowledgementsSection()
         }
         .formStyle(.grouped)
         .frame(width: 500)
         .padding()
         .onAppear {
+            #if !APPSTORE
             hfToken = HuggingFaceToken.value
+            #endif
             checkOllama()
         }
     }

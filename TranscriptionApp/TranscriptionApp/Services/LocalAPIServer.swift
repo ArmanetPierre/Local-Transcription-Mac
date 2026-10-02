@@ -9,7 +9,12 @@ import UniformTypeIdentifiers
 /// Authentification : jeton Bearer aleatoire ecrit dans
 /// ~/Library/Application Support/Voxa/api.json (permissions 600), avec le port.
 final class LocalAPIServer {
+    #if APPSTORE
+    // Port different : les versions DMG et App Store peuvent etre installees ensemble
+    static let defaultPort: UInt16 = 47822
+    #else
     static let defaultPort: UInt16 = 47821
+    #endif
 
     private let listVM: TranscriptionListVM
     private let modelContainer: ModelContainer
@@ -18,11 +23,11 @@ final class LocalAPIServer {
     private let token: String
 
     static var configFileURL: URL {
-        DependencyManager.appSupportDirectory.appendingPathComponent("api.json")
+        AppPaths.appSupportDirectory.appendingPathComponent("api.json")
     }
 
     static var mcpScriptPath: String {
-        DependencyManager.scriptsDirectory.appendingPathComponent("voxa_mcp.py").path
+        AppPaths.scriptsDirectory.appendingPathComponent("voxa_mcp.py").path
     }
 
     init(listVM: TranscriptionListVM, modelContainer: ModelContainer) {
@@ -178,7 +183,7 @@ final class LocalAPIServer {
 
     private func send(_ response: Response, on connection: NWConnection) {
         let reason = [200: "OK", 201: "Created", 400: "Bad Request", 401: "Unauthorized",
-                      404: "Not Found", 405: "Method Not Allowed", 409: "Conflict",
+                      403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 409: "Conflict",
                       500: "Internal Server Error"][response.status] ?? "OK"
         var head = "HTTP/1.1 \(response.status) \(reason)\r\n"
         head += "Content-Type: \(response.contentType)\r\n"
@@ -279,7 +284,31 @@ final class LocalAPIServer {
         }
         let path = (rawPath as NSString).expandingTildeInPath
         let url = URL(fileURLWithPath: path).standardizedFileURL
+        let ext = url.pathExtension.lowercased()
+        let type = UTType(filenameExtension: ext)
+        guard type?.conforms(to: .audiovisualContent) == true else {
+            return .error("Unsupported file type: .\(ext)", status: 400)
+        }
+        let language = (json["language"] as? String).flatMap { $0.isEmpty ? nil : $0 }
 
+        #if APPSTORE
+        // Sandbox : seulement les dossiers autorises par l'utilisateur dans les Reglages
+        do {
+            let project = try await FolderAccess.shared.withAccess(to: url) { () async throws -> TranscriptionProject in
+                guard FileManager.default.fileExists(atPath: url.path) else {
+                    throw APIError.notFound("File not found: \(url.path)")
+                }
+                return try await listVM.enqueue(url, language: language, modelContext: context)
+            }
+            return .json(summary(of: project), status: 201)
+        } catch let error as FolderAccessError {
+            return .error(error.localizedDescription, status: 403)
+        } catch APIError.notFound(let message) {
+            return .error(message, status: 404)
+        } catch {
+            return .error(error.localizedDescription, status: 500)
+        }
+        #else
         // Ne transcrire que des fichiers du dossier utilisateur
         let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
         guard url.path.hasPrefix(home + "/") else {
@@ -288,19 +317,17 @@ final class LocalAPIServer {
         guard FileManager.default.fileExists(atPath: url.path) else {
             return .error("File not found: \(url.path)", status: 404)
         }
-        let ext = url.pathExtension.lowercased()
-        let type = UTType(filenameExtension: ext)
-        guard type?.conforms(to: .audiovisualContent) == true else {
-            return .error("Unsupported file type: .\(ext)", status: 400)
-        }
-
-        let language = (json["language"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         do {
             let project = try await listVM.enqueue(url, language: language, modelContext: context)
             return .json(summary(of: project), status: 201)
         } catch {
             return .error(error.localizedDescription, status: 500)
         }
+        #endif
+    }
+
+    private enum APIError: Error {
+        case notFound(String)
     }
 
     @MainActor

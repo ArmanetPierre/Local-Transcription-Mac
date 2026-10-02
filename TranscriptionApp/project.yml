@@ -16,13 +16,18 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: "2.6.0"
+  VoxaEngine:
+    path: ../Packages/VoxaEngine
 
 targets:
   TranscriptionApp:
     type: application
     platform: macOS
     sources:
-      - TranscriptionApp
+      - path: TranscriptionApp
+        excludes:
+          - "AppStore/**"
+          - "**/__pycache__/**"
     dependencies:
       - package: Sparkle
     postCompileScripts:
@@ -74,7 +79,62 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: false
 
+  # Version Mac App Store : sandbox, moteur natif uniquement (dans le processus),
+  # sans Python, sans Sparkle. Meme code, drapeau de compilation APPSTORE.
+  VoxaAppStore:
+    type: application
+    platform: macOS
+    sources:
+      - path: TranscriptionApp
+        excludes:
+          - "**/__pycache__/**"
+          - "Services/PythonBridge.swift"
+          - "Services/DependencyManager.swift"
+          - "Services/NativeEngineSupport.swift"
+          - "Views/SetupView.swift"
+          - "Views/EngineSection.swift"
+          - "Resources/transcribe_bridge.py"
+          - "Resources/transcribe.py"
+          - "Resources/requirements.txt"
+          - "Resources/TranscriptionApp.entitlements"
+          - "Info.plist"
+          - "AppStore/Info.plist"
+          - "AppStore/AppStore.entitlements"
+    dependencies:
+      - package: VoxaEngine
+        product: VoxaEngine
+    settings:
+      base:
+        PRODUCT_NAME: Voxa
+        PRODUCT_MODULE_NAME: Voxa
+        # Identifiant de la fiche App Store Connect (a creer avec le meme)
+        PRODUCT_BUNDLE_IDENTIFIER: com.pierre.voxa.appstore
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) APPSTORE"
+        ENABLE_APP_SANDBOX: true
+        ENABLE_HARDENED_RUNTIME: true
+        ENABLE_USER_SCRIPT_SANDBOXING: false
+        CODE_SIGN_ENTITLEMENTS: TranscriptionApp/AppStore/AppStore.entitlements
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: C3A57SQ939
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_FILE: TranscriptionApp/AppStore/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Voxa
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Voxa uses the microphone to record your voice during meetings."
+        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Pierre Armanet"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.6.0"
+        CURRENT_PROJECT_VERSION: "1"
+
 schemes:
+  VoxaAppStore:
+    build:
+      targets:
+        VoxaAppStore: all
+    run:
+      config: Debug
+    archive:
+      config: Release
   TranscriptionApp:
     build:
       targets:

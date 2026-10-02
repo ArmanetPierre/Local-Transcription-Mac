@@ -62,6 +62,16 @@ final class OllamaService {
 
     /// S'assure qu'Ollama est en cours d'execution. Demarre le serveur si necessaire.
     func ensureRunning() async -> Bool {
+        #if APPSTORE
+        // Version App Store (sandbox) : impossible de lancer ollama, on utilise
+        // seulement un serveur deja demarre par l'utilisateur.
+        return await isAvailable()
+        #else
+        return await ensureRunningLaunchingIfNeeded()
+        #endif
+    }
+
+    private func ensureRunningLaunchingIfNeeded() async -> Bool {
         // 1. Verifier si deja disponible
         if await isAvailable() {
             print("[Ollama] Serveur deja disponible")

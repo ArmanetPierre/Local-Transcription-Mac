@@ -161,6 +161,14 @@ To test the UI without running the models, launch a Debug build with the fake br
 open --env VOXA_BRIDGE_SCRIPT="$PWD/scripts/dev/fake_bridge.py" build/DerivedData/Build/Products/Debug/Voxa.app
 ```
 
+### Mac App Store version
+
+The `VoxaAppStore` target builds a sandboxed, Python-free variant (compilation flag `APPSTORE`): native engine only (in-process), no setup wizard, no Sparkle, model download on first launch, Claude Code access limited to folders the user allows in Settings. Sources specific to it live in `TranscriptionApp/TranscriptionApp/AppStore/`. See [APP_STORE.md](APP_STORE.md) for the submission checklist and store texts.
+
+```bash
+./scripts/build-appstore.sh            # tests, archive and upload to App Store Connect
+```
+
 ### Releasing a new version
 
 1. Run `./scripts/test.sh`. In `TranscriptionApp/project.yml`, bump `MARKETING_VERSION` **and** `CURRENT_PROJECT_VERSION` (build number). Sparkle compares build numbers: if it does not increase, users never see the update. Then run `xcodegen generate` and commit.
