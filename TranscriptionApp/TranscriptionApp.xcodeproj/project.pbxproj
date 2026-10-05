@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		036BA2EE40AD1551C9146529 /* RecordingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED65DC9EA843F35A3796CAF /* RecordingBanner.swift */; };
 		04B01DA97CFB01CB6A34D8F7 /* MeetingReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABDBEA29F9EEFDB034EEDDCD /* MeetingReportView.swift */; };
 		05B53E86F77CA5D095F9FB26 /* KnownVoicesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */; };
 		080FD2D439C1FD7EC9BBE8E4 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
 		09E400560BAE07A38117FCF5 /* KnownVoicesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */; };
+		0A485541321529900B9F4050 /* RecordingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED65DC9EA843F35A3796CAF /* RecordingBanner.swift */; };
 		0A5BFC0F17E1B505F8B2C575 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
 		0A7106848FF6C84F1F8EC3A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E78EE3E6BF27450313E094 /* SettingsView.swift */; };
 		0B47B807ACA8F027550E7248 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
@@ -143,6 +145,7 @@
 		4652381313FAD80AED4548ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
 		4BDD1A49C82078A04A25DCBE /* VoxaAppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxaAppStore.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4ED65DC9EA843F35A3796CAF /* RecordingBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingBanner.swift; sourceTree = "<group>"; };
 		52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceToken.swift; sourceTree = "<group>"; };
 		5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerEmbeddingStore.swift; sourceTree = "<group>"; };
 		59B1CA4B4049A73379AF6AC0 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
@@ -313,6 +316,7 @@
 				5DAC878DC98F8C7149DCDCFD /* EngineSection.swift */,
 				42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */,
 				D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */,
+				4ED65DC9EA843F35A3796CAF /* RecordingBanner.swift */,
 				69E78EE3E6BF27450313E094 /* SettingsView.swift */,
 				59B1CA4B4049A73379AF6AC0 /* SetupView.swift */,
 				62BA23A6843ABD0DBBD02573 /* Detail */,
@@ -580,6 +584,7 @@
 				C8EB795CBC5756427704889A /* OllamaService.swift in Sources */,
 				937B87F84D69F35AFE278CF0 /* ProgressOverlay.swift in Sources */,
 				7020C52FCBC8A480420FCEC6 /* PythonMessage.swift in Sources */,
+				0A485541321529900B9F4050 /* RecordingBanner.swift in Sources */,
 				AE470269E85CC63CB75F7D48 /* RecordingMenuBarSection.swift in Sources */,
 				12F035DBA6FB64D1762D801C /* RecordingService.swift in Sources */,
 				A4DCE284EE496F586833DA57 /* RecordingVM.swift in Sources */,
@@ -632,6 +637,7 @@
 				DAE1468C74895C14F40E4BD6 /* ProgressOverlay.swift in Sources */,
 				553B23A32B0BCC47E5538E58 /* PythonBridge.swift in Sources */,
 				78BC99D8B5D0803BA9460945 /* PythonMessage.swift in Sources */,
+				036BA2EE40AD1551C9146529 /* RecordingBanner.swift in Sources */,
 				C5E727B8017DF924131E27F2 /* RecordingMenuBarSection.swift in Sources */,
 				DD972A1193A3A09F80E1004D /* RecordingService.swift in Sources */,
 				BCFA801A03ED616AAB6AC770 /* RecordingVM.swift in Sources */,

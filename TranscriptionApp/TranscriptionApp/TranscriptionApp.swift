@@ -85,7 +85,7 @@ struct TranscriptionApp: App {
             Group {
                 #if APPSTORE
                 if nativeModels.isPrepared || nativeModels.hasDownloadedModels {
-                    ContentView(listVM: listVM)
+                    ContentView(listVM: listVM, recordingVM: recordingVM)
                         .onAppear {
                             recordingVM.modelContainer = modelContainer
                         }
@@ -100,7 +100,7 @@ struct TranscriptionApp: App {
                 }
                 #else
                 if setupCompleted {
-                    ContentView(listVM: listVM)
+                    ContentView(listVM: listVM, recordingVM: recordingVM)
                         .onAppear {
                             recordingVM.modelContainer = modelContainer
                         }
@@ -124,6 +124,21 @@ struct TranscriptionApp: App {
             }
         }
         .modelContainer(modelContainer)
+        .commands {
+            CommandMenu("Recording") {
+                if recordingVM.recordingService.isRecording {
+                    Button("Stop and transcribe") {
+                        recordingVM.stopAndTranscribe(listVM: listVM)
+                    }
+                    .keyboardShortcut("r", modifiers: [.command, .shift])
+                } else {
+                    Button("Record a meeting") {
+                        recordingVM.startRecording()
+                    }
+                    .keyboardShortcut("r", modifiers: [.command, .shift])
+                }
+            }
+        }
 
         Settings {
             #if APPSTORE

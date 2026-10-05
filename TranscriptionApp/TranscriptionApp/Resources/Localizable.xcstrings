@@ -1176,6 +1176,16 @@
         }
       }
     },
+    "Recording" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement"
+          }
+        }
+      }
+    },
     "Recording in progress" : {
       "localizations" : {
         "fr" : {
