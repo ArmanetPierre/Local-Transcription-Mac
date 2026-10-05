@@ -53,6 +53,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: TranscriptionApp/Resources/TranscriptionApp.entitlements
         ENABLE_APP_SANDBOX: false
         PRODUCT_NAME: Voxa
+        SWIFT_OBJC_BRIDGING_HEADER: TranscriptionApp/ObjC/Voxa-Bridging-Header.h
         GENERATE_INFOPLIST_FILE: true
         # Cles Sparkle (les INFOPLIST_KEY_ personnalisees sont ignorees par Xcode)
         INFOPLIST_FILE: TranscriptionApp/Info.plist
@@ -106,6 +107,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Voxa
+        SWIFT_OBJC_BRIDGING_HEADER: TranscriptionApp/ObjC/Voxa-Bridging-Header.h
         PRODUCT_MODULE_NAME: Voxa
         # Identifiant de la fiche App Store Connect (a creer avec le meme)
         PRODUCT_BUNDLE_IDENTIFIER: com.pierre.voxa.appstore

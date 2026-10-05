@@ -163,7 +163,7 @@ final class LocalAPIServer {
             headers[key] = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
         }
 
-        let length = Int(headers["content-length"] ?? "0") ?? 0
+        let length = max(0, Int(headers["content-length"] ?? "0") ?? 0)
         let body = data[headerEnd.upperBound...]
         guard body.count >= length else { return nil }
 
@@ -272,7 +272,7 @@ final class LocalAPIServer {
         if let since = query["since"], let date = Self.parseDate(since) {
             projects = projects.filter { $0.createdAt >= date }
         }
-        let limit = Int(query["limit"] ?? "") ?? 20
+        let limit = max(0, Int(query["limit"] ?? "") ?? 20)
         return .json(["transcriptions": projects.prefix(limit).map { summary(of: $0) }])
     }
 

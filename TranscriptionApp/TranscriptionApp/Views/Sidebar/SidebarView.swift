@@ -42,15 +42,20 @@ struct SidebarView: View {
                         .contextMenu {
                             Button("Delete", role: .destructive) {
                                 if selection == project { selection = nil }
+                                viewModel.removeFromQueue(project)
                                 SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
                                 modelContext.delete(project)
                                 modelContext.saveLogged("suppression")
                             }
+                            // La transcription en cours ecrit dans ce projet : l'annuler d'abord
+                            .disabled(viewModel.currentProject?.id == project.id)
                         }
                 }
                 .onDelete { indexSet in
                     for index in indexSet {
                         let project = filteredProjects[index]
+                        guard viewModel.currentProject?.id != project.id else { continue }
+                        viewModel.removeFromQueue(project)
                         if selection == project { selection = nil }
                         SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
                         modelContext.delete(project)

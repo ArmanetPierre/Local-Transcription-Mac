@@ -34,7 +34,8 @@ struct ImportDropZone: View {
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        var urls: [URL] = []
+        // Les callbacks arrivent en parallele sur des files d'arriere-plan
+        let collected = DroppedURLs()
         let group = DispatchGroup()
 
         for provider in providers {
@@ -46,12 +47,13 @@ struct ImportDropZone: View {
 
                 let audioExtensions = ["m4a", "mp3", "wav", "aac", "flac", "ogg", "wma", "aiff", "mp4", "mov", "m4v"]
                 if audioExtensions.contains(url.pathExtension.lowercased()) {
-                    urls.append(url)
+                    collected.append(url)
                 }
             }
         }
 
         group.notify(queue: .main) {
+            let urls = collected.urls
             if !urls.isEmpty {
                 onImport(urls)
             }
@@ -59,4 +61,12 @@ struct ImportDropZone: View {
 
         return true
     }
+}
+
+private final class DroppedURLs: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [URL] = []
+
+    func append(_ url: URL) { lock.withLock { storage.append(url) } }
+    var urls: [URL] { lock.withLock { storage } }
 }

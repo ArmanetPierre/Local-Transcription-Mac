@@ -20,6 +20,8 @@ enum PythonBridgeError: LocalizedError {
 @Observable
 final class PythonBridge {
     var isRunning = false
+    /// Sans aucun message du moteur pendant ce delai, il est considere comme bloque
+    static let inactivityTimeout: TimeInterval = 30 * 60
     var currentStep = ""
     var progressPercent: Double = 0
 
@@ -142,8 +144,7 @@ final class PythonBridge {
                 process.standardOutput = stdout
                 process.standardError = stderr
 
-                let decoder = JSONDecoder()
-                var buffer = ""
+                let reader = JSONLineReader { message in continuation.yield(message) }
 
                 await MainActor.run {
                     self.isRunning = true
@@ -151,35 +152,18 @@ final class PythonBridge {
                     self.progressPercent = 0
                 }
 
+                // Fin = processus termine ET sortie entierement lue (le resultat final est
+                // ecrit juste avant la sortie). Les lectures restent dans l'ordre : tout passe
+                // par le gestionnaire de lecture, jusqu'a la fin de fichier.
+                let completion = BridgeCompletion()
+
                 stdout.fileHandleForReading.readabilityHandler = { handle in
                     let data = handle.availableData
-                    guard !data.isEmpty else { return }
-                    guard let str = String(data: data, encoding: .utf8) else { return }
-
-                    buffer += str
-                    let lines = buffer.split(separator: "\n", omittingEmptySubsequences: false)
-
-                    // Garder la derniere partie incomplete dans le buffer
-                    if buffer.hasSuffix("\n") {
-                        buffer = ""
-                    } else if let last = lines.last {
-                        buffer = String(last)
-                    }
-
-                    let completeLines = buffer.isEmpty ? lines : lines.dropLast()
-
-                    for line in completeLines {
-                        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { continue }
-                        guard let lineData = trimmed.data(using: .utf8) else { continue }
-
-                        do {
-                            let message = try decoder.decode(PythonMessage.self, from: lineData)
-                            continuation.yield(message)
-                        } catch {
-                            // Ligne non-JSON (log stderr qui fuite sur stdout)
-                            continuation.yield(.log(LogMessage(level: "debug", message: trimmed)))
-                        }
+                    if data.isEmpty {
+                        handle.readabilityHandler = nil
+                        completion.stdoutDidClose()
+                    } else {
+                        reader.feed(data)
                     }
                 }
 
@@ -188,24 +172,56 @@ final class PythonBridge {
                 // On ne garde que la fin, utile pour le message d'erreur.
                 let stderrTail = StderrTail()
                 stderr.fileHandleForReading.readabilityHandler = { handle in
-                    stderrTail.append(handle.availableData)
+                    let data = handle.availableData
+                    if data.isEmpty {
+                        handle.readabilityHandler = nil
+                    } else {
+                        stderrTail.append(data)
+                    }
                 }
 
-                process.terminationHandler = { [weak self] proc in
+                // Moteur bloque (telechargement, MPS...) : sans message pendant trop longtemps,
+                // on l'arrete plutot que de bloquer toute la file indefiniment
+                let watchdog = Task.detached {
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .seconds(30))
+                        if Date().timeIntervalSince(reader.lastActivity) > Self.inactivityTimeout, process.isRunning {
+                            print("[PythonBridge] Aucun message depuis \(Int(Self.inactivityTimeout / 60)) min : arret du moteur")
+                            reader.timedOut = true
+                            process.terminate()
+                            return
+                        }
+                    }
+                }
+
+                completion.onComplete = { [weak self] status in
                     stdout.fileHandleForReading.readabilityHandler = nil
                     stderr.fileHandleForReading.readabilityHandler = nil
-                    stderrTail.append(stderr.fileHandleForReading.readDataToEndOfFile())
+                    reader.flush()
 
                     Task { @MainActor in
                         self?.isRunning = false
                     }
 
-                    if proc.terminationStatus != 0 {
+                    if reader.timedOut {
+                        continuation.finish(throwing: PythonBridgeError.processExited(
+                            code: status,
+                            stderr: "Le moteur ne repondait plus (aucun message pendant \(Int(Self.inactivityTimeout / 60)) min)."))
+                    } else if status != 0 {
                         let errStr = stderrTail.text.isEmpty ? "Erreur inconnue" : stderrTail.text
                         continuation.finish(throwing: PythonBridgeError.processExited(
-                            code: proc.terminationStatus, stderr: errStr))
+                            code: status, stderr: errStr))
                     } else {
                         continuation.finish()
+                    }
+                }
+
+                process.terminationHandler = { proc in
+                    watchdog.cancel()
+                    completion.processDidExit(status: proc.terminationStatus)
+                    // Un processus enfant peut garder la sortie ouverte : pas plus de 5 s d'attente
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 5) {
+                        completion.stdoutDidClose()
                     }
                 }
 
@@ -227,6 +243,83 @@ final class PythonBridge {
 
     func cancel() {
         process?.terminate()
+    }
+}
+
+/// Termine le flux une seule fois, quand le processus est sorti et que sa sortie est lue.
+final class BridgeCompletion: @unchecked Sendable {
+    private let lock = NSLock()
+    private var status: Int32?
+    private var stdoutClosed = false
+    private var done = false
+    var onComplete: ((Int32) -> Void)?
+
+    func processDidExit(status: Int32) {
+        lock.withLock { self.status = status }
+        completeIfReady()
+    }
+
+    func stdoutDidClose() {
+        lock.withLock { stdoutClosed = true }
+        completeIfReady()
+    }
+
+    private func completeIfReady() {
+        let ready: Int32? = lock.withLock {
+            guard !done, stdoutClosed, let status else { return nil }
+            done = true
+            return status
+        }
+        if let ready { onComplete?(ready) }
+    }
+}
+
+/// Decoupe la sortie du moteur en lignes JSON. Travaille sur des octets : un morceau
+/// coupe au milieu d'un caractere accentue ne fait pas perdre la ligne.
+final class JSONLineReader: @unchecked Sendable {
+    private let lock = NSLock()
+    private var pending = Data()
+    private let decoder = JSONDecoder()
+    private let onMessage: (PythonMessage) -> Void
+    private var _lastActivity = Date()
+    var timedOut = false
+
+    init(onMessage: @escaping (PythonMessage) -> Void) {
+        self.onMessage = onMessage
+    }
+
+    var lastActivity: Date { lock.withLock { _lastActivity } }
+
+    func feed(_ data: Data) {
+        guard !data.isEmpty else { return }
+        lock.withLock {
+            _lastActivity = Date()
+            pending.append(data)
+            while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
+                let line = pending[pending.startIndex..<newline]
+                pending.removeSubrange(pending.startIndex...newline)
+                emit(Data(line))
+            }
+        }
+    }
+
+    /// Derniere ligne sans retour a la ligne final
+    func flush() {
+        lock.withLock {
+            if !pending.isEmpty { emit(pending) }
+            pending = Data()
+        }
+    }
+
+    private func emit(_ line: Data) {
+        let text = String(decoding: line, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        if let message = try? decoder.decode(PythonMessage.self, from: Data(text.utf8)) {
+            onMessage(message)
+        } else {
+            // Ligne non-JSON (log qui fuite sur stdout)
+            onMessage(.log(LogMessage(level: "debug", message: text)))
+        }
     }
 }
 

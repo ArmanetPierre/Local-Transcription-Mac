@@ -8,7 +8,8 @@ import SwiftUI
 struct TranscriptionApp: App {
     let modelContainer: ModelContainer
     @State private var listVM: TranscriptionListVM
-    @State private var recordingVM = RecordingVM()
+    @State private var recordingVM: RecordingVM
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #if APPSTORE
     // Version App Store : moteur natif uniquement, mises a jour par l'App Store
     @State private var nativeModels = NativeModels.shared
@@ -25,6 +26,9 @@ struct TranscriptionApp: App {
     let apiServer: LocalAPIServer
 
     init() {
+        if !Self.isRunningTests {
+            AppLog.setUp()
+        }
         #if !APPSTORE
         self.updaterController = SPUStandardUpdaterController(
             startingUpdater: !Self.isRunningTests,
@@ -49,10 +53,7 @@ struct TranscriptionApp: App {
         let config = Self.isRunningTests
             ? ModelConfiguration(isStoredInMemoryOnly: true)
             : ModelConfiguration(url: storeURL)
-        self.modelContainer = try! ModelContainer(
-            for: TranscriptionProject.self,
-            configurations: config
-        )
+        self.modelContainer = Self.openStore(config: config, storeURL: storeURL)
 
         #if !APPSTORE
         if !Self.isRunningTests {
@@ -62,6 +63,10 @@ struct TranscriptionApp: App {
 
         let listVM = TranscriptionListVM()
         self._listVM = State(initialValue: listVM)
+        let recordingVM = RecordingVM()
+        recordingVM.modelContainer = modelContainer
+        recordingVM.configure(listVM: listVM)
+        self._recordingVM = State(initialValue: recordingVM)
         self.apiServer = LocalAPIServer(listVM: listVM, modelContainer: modelContainer)
         // Pas d'API pendant les tests unitaires (l'app sert d'hote aux tests)
         if !Self.isRunningTests {
@@ -82,13 +87,64 @@ struct TranscriptionApp: App {
             MainActor.assumeIsolated { mainContext.saveLogged("app en arriere-plan") }
         }
 
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
+        // Quitter : finaliser un enregistrement en cours, arreter le moteur, sauvegarder
+        AppDelegate.prepareForTermination = {
+            if recordingVM.recordingService.isRecording {
+                print("[App] Fermeture pendant un enregistrement : finalisation")
+                await recordingVM.stopAndImport(listVM: listVM, reason: "fermeture de l'app")
+            }
+            // Un arret lance juste avant (bouton Stop puis Cmd-Q) doit aussi aboutir
+            await recordingVM.waitUntilIdle()
+            listVM.stopForQuit()
+            mainContext.saveLogged("fermeture")
             OllamaService.stopServer()
         }
+    }
+
+    /// Message a afficher au lancement si la base a du etre mise de cote
+    @MainActor static var storeRecoveryMessage: String?
+
+    /// Ouvre la base. Si elle est illisible (migration ratee apres une mise a jour,
+    /// fichier abime), on la met de cote au lieu de planter a chaque lancement.
+    private static func openStore(config: ModelConfiguration, storeURL: URL) -> ModelContainer {
+        do {
+            return try ModelContainer(for: TranscriptionProject.self, configurations: config)
+        } catch {
+            print("[App] ERREUR ouverture de la base: \(error)")
+        }
+        let fm = FileManager.default
+        let stamp = Int(Date().timeIntervalSince1970)
+        for suffix in ["", "-wal", "-shm"] {
+            let file = URL(fileURLWithPath: storeURL.path + suffix)
+            if fm.fileExists(atPath: file.path) {
+                try? fm.moveItem(at: file, to: URL(fileURLWithPath: storeURL.path + ".unreadable-\(stamp)" + suffix))
+            }
+        }
+        MainActor.assumeIsolated {
+            storeRecoveryMessage = String(localized: "Your transcription database could not be opened and was set aside (Voxa.store.unreadable-\(stamp) in the Voxa folder). Your audio files are untouched.")
+        }
+        do {
+            return try ModelContainer(for: TranscriptionProject.self, configurations: config)
+        } catch {
+            print("[App] ERREUR base neuve: \(error) — base en memoire")
+            return try! ModelContainer(
+                for: TranscriptionProject.self,
+                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            )
+        }
+    }
+
+    /// Reprise des transcriptions et des enregistrements interrompus : une seule fois par
+    /// lancement (le `.task` de la fenetre se relance si elle est fermee puis rouverte).
+    @MainActor
+    private func launchTasksOnce() async {
+        guard !AppDelegate.didRunLaunchTasks else { return }
+        AppDelegate.didRunLaunchTasks = true
+        if let message = Self.storeRecoveryMessage {
+            recordingVM.recordingService.errorMessage = message
+        }
+        listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
+        await recordingVM.recoverInterrupted(listVM: listVM)
     }
 
     var body: some Scene {
@@ -97,12 +153,9 @@ struct TranscriptionApp: App {
                 #if APPSTORE
                 if nativeModels.isPrepared || nativeModels.hasDownloadedModels {
                     ContentView(listVM: listVM, recordingVM: recordingVM)
-                        .onAppear {
-                            recordingVM.modelContainer = modelContainer
-                        }
-                        .task {
+                                    .task {
                             guard !Self.isRunningTests else { return }
-                            listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
+                            await launchTasksOnce()
                             // Apres une mise a jour, Core ML reprepare les modeles
                             nativeModels.prepareInBackgroundIfNeeded()
                         }
@@ -112,17 +165,14 @@ struct TranscriptionApp: App {
                 #else
                 if setupCompleted {
                     ContentView(listVM: listVM, recordingVM: recordingVM)
-                        .onAppear {
-                            recordingVM.modelContainer = modelContainer
-                        }
-                        .task {
+                                    .task {
                             guard !Self.isRunningTests else { return }
                             // Silent re-check: if venv was deleted, go back to setup
                             await dependencyManager.checkAll()
                             if !dependencyManager.overallReady {
                                 setupCompleted = false
                             } else {
-                                listVM.resumeInterrupted(modelContext: modelContainer.mainContext)
+                                await launchTasksOnce()
                                 NativeEngineSupport.shared.prepareIfNeeded()
                             }
                         }
@@ -136,10 +186,13 @@ struct TranscriptionApp: App {
         }
         .modelContainer(modelContainer)
         .commands {
+            CommandGroup(after: .help) {
+                Button("Show Logs in Finder") { AppLog.reveal() }
+            }
             CommandMenu("Recording") {
                 if recordingVM.recordingService.isRecording {
                     Button("Stop and transcribe") {
-                        recordingVM.stopAndTranscribe(listVM: listVM)
+                        recordingVM.stopAndTranscribe(listVM: listVM, reason: "menu Enregistrement / ⇧⌘R")
                     }
                     .keyboardShortcut("r", modifiers: [.command, .shift])
                 } else {
@@ -186,5 +239,25 @@ struct TranscriptionApp: App {
             }
         }
         .menuBarExtraStyle(.menu)
+    }
+}
+
+/// Delegue AppKit : fermeture propre (enregistrement en cours finalise avant de quitter).
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    @MainActor static var prepareForTermination: (@MainActor () async -> Void)?
+    @MainActor static var didRunLaunchTasks = false
+    private var isTerminating = false
+
+    @MainActor
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let prepare = Self.prepareForTermination else { return .terminateNow }
+        // Deuxieme demande pendant la finalisation : la premiere quittera une fois terminee
+        guard !isTerminating else { return .terminateCancel }
+        isTerminating = true
+        Task { @MainActor in
+            await prepare()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 }

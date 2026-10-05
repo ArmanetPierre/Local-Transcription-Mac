@@ -1176,6 +1176,116 @@
         }
       }
     },
+    "The microphone and system audio could not be merged: only one track will be transcribed. Both tracks were kept in the Voxa audio folder." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le micro et l'audio système n'ont pas pu être fusionnés : une seule piste sera transcrite. Les deux pistes sont conservées dans le dossier audio de Voxa."
+          }
+        }
+      }
+    },
+    "The recording could not be saved." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'enregistrement n'a pas pu être sauvegardé."
+          }
+        }
+      }
+    },
+    "Transcription cancelled." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription annulée."
+          }
+        }
+      }
+    },
+    "Show Logs in Finder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les journaux dans le Finder"
+          }
+        }
+      }
+    },
+    "An interrupted recording was recovered and added to your transcriptions." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un enregistrement interrompu a été récupéré et ajouté à vos transcriptions."
+          }
+        }
+      }
+    },
+    "The recording was stopped because the disk is almost full." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'enregistrement a été arrêté car le disque est presque plein."
+          }
+        }
+      }
+    },
+    "The recording could not be finalized. Its tracks were kept and will be recovered at the next launch." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'enregistrement n'a pas pu être finalisé. Ses pistes sont conservées et seront récupérées au prochain lancement."
+          }
+        }
+      }
+    },
+    "Not enough free disk space to record (at least 2 GB required)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espace disque insuffisant pour enregistrer (2 Go minimum)."
+          }
+        }
+      }
+    },
+    "No microphone available" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun micro disponible"
+          }
+        }
+      }
+    },
+    "Finishing the recording…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalisation de l'enregistrement…"
+          }
+        }
+      }
+    },
+    "Your transcription database could not be opened and was set aside (Voxa.store.unreadable-%lld in the Voxa folder). Your audio files are untouched." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre base de transcriptions n'a pas pu être ouverte et a été mise de côté (Voxa.store.unreadable-%lld dans le dossier Voxa). Vos fichiers audio sont intacts."
+          }
+        }
+      }
+    },
     "Recording" : {
       "localizations" : {
         "fr" : {

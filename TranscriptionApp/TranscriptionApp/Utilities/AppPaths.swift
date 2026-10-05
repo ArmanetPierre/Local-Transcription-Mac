@@ -20,4 +20,12 @@ enum AppPaths {
     static let modelsDirectory: URL = {
         appSupportDirectory.appendingPathComponent("Models", isDirectory: true)
     }()
+
+    /// Enregistrements en cours ou interrompus (un dossier par session). Hors du dossier
+    /// temporaire : macOS le vide, alors qu'une session interrompue doit etre recuperee.
+    static let recordingsDirectory: URL = {
+        let dir = appSupportDirectory.appendingPathComponent("Recordings", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
 }

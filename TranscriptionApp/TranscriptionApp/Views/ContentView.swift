@@ -27,6 +27,9 @@ struct ContentView: View {
                 project: project,
                 estimationService: listVM.currentProject?.id == project.id ? listVM.estimationService : nil
             )
+            // Etat propre a chaque projet (audio charge, noms en cours de saisie) :
+            // sans cela, les noms saisis pour un projet s'appliquaient au suivant
+            .id(project.id)
         } else {
             ContentUnavailableView(
                 "No transcription selected",

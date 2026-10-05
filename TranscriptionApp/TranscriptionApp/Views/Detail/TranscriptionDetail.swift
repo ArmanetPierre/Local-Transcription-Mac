@@ -150,6 +150,7 @@ struct TranscriptionDetail: View {
                 TextField("Title", text: $project.title)
                     .font(.title2.bold())
                     .textFieldStyle(.plain)
+                    .onSubmit { modelContext.saveLogged("titre") }
 
                 HStack(spacing: 12) {
                     if let lang = project.language {

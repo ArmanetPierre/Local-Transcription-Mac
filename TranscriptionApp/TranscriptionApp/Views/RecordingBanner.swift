@@ -10,9 +10,42 @@ struct RecordingBanner: View {
     var body: some View {
         if recordingVM.recordingService.isRecording {
             recordingBar
+        } else if recordingVM.recordingService.isFinishing {
+            HStack(spacing: 10) {
+                ProgressView().controlSize(.small)
+                Text("Finishing the recording…").font(.callout)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.red.opacity(0.08))
         } else if recordingVM.showPermissionAlert {
             permissionBar
+        } else if let error = recordingVM.recordingService.errorMessage {
+            errorBar(error)
         }
+    }
+
+    private func errorBar(_ message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
+
+            Button {
+                recordingVM.recordingService.errorMessage = nil
+            } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.orange.opacity(0.12))
     }
 
     private var recordingBar: some View {
@@ -29,7 +62,7 @@ struct RecordingBanner: View {
             Spacer()
 
             Button {
-                recordingVM.stopAndTranscribe(listVM: listVM)
+                recordingVM.stopAndTranscribe(listVM: listVM, reason: "bouton du bandeau")
             } label: {
                 Label("Stop and transcribe", systemImage: "stop.circle.fill")
             }
