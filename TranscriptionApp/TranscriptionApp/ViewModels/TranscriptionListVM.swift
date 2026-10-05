@@ -138,6 +138,7 @@ final class TranscriptionListVM {
         project.title = url.deletingPathExtension().lastPathComponent
         project.language = language
         modelContext.insert(project)
+        modelContext.saveLogged("import")
         batchQueue.append(storedURL)
 
         if !bridge.isRunning && currentProject == nil {
@@ -167,6 +168,7 @@ final class TranscriptionListVM {
             project.currentStep = nil
             batchQueue.append(URL(fileURLWithPath: project.audioFilePath))
         }
+        modelContext.saveLogged("resumeInterrupted")
         if !projects.isEmpty && !bridge.isRunning && currentProject == nil {
             processNext(modelContext: modelContext)
         }
@@ -213,6 +215,7 @@ final class TranscriptionListVM {
 
         project.status = .transcribing
         project.progressPercent = 0
+        modelContext.saveLogged("debut transcription")
         estimationService.startTracking()
 
         let hfToken = HuggingFaceToken.value
@@ -404,6 +407,7 @@ final class TranscriptionListVM {
             }
 
             print("[ListVM] === FIN TRANSCRIPTION: \(project.status) ===")
+            modelContext.saveLogged("fin transcription")
             currentProject = nil
             estimationService.reset()
 
@@ -419,6 +423,7 @@ final class TranscriptionListVM {
                 project.errorMessage = error.localizedDescription
             }
             print("[ListVM] === FIN TRANSCRIPTION (erreur): \(project.status) ===")
+            modelContext.saveLogged("fin transcription (erreur)")
             currentProject = nil
             estimationService.reset()
         }

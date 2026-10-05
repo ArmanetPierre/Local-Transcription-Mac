@@ -63,6 +63,7 @@ final class TranscriptionDetailVM {
         project.speakerNames = names
         // Nom choisi par l'utilisateur : ce n'est plus une reconnaissance automatique
         project.autoRecognizedSpeakers.removeValue(forKey: label)
+        project.modelContext?.saveLogged("nom speaker")
     }
 
     func exportProject(_ project: TranscriptionProject, format: ExportFormat) {
@@ -80,11 +81,13 @@ final class TranscriptionDetailVM {
     func confirmSpeakerNames(project: TranscriptionProject) {
         project.status = .completed
         project.completedAt = Date()
+        project.modelContext?.saveLogged("noms speakers confirmes")
     }
 
     func skipSpeakerNames(project: TranscriptionProject) {
         project.status = .completed
         project.completedAt = Date()
+        project.modelContext?.saveLogged("noms speakers ignores")
     }
 
     func regenerateAll(project: TranscriptionProject) {
@@ -99,6 +102,7 @@ final class TranscriptionDetailVM {
     @MainActor
     private func generateAll(project: TranscriptionProject, clearExisting: Bool = false) async {
         summaryError = nil
+        defer { project.modelContext?.saveLogged("generation") }
         print("[Generation] Debut - \(project.uniqueSpeakers.count) speakers")
 
         let available = await ollamaService.ensureRunning()

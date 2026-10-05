@@ -358,6 +358,7 @@ final class LocalAPIServer {
             project.status = .completed
             project.completedAt = Date()
         }
+        project.modelContext?.saveLogged("API noms speakers")
         return .json(summary(of: project))
     }
 
@@ -369,6 +370,7 @@ final class LocalAPIServer {
         }
         project.meetingReport = markdown
         project.reportModelUsed = (json["model"] as? String) ?? "Claude"
+        project.modelContext?.saveLogged("API compte rendu")
         return .json(summary(of: project))
     }
 

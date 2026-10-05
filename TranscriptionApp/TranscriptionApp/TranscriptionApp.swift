@@ -71,6 +71,17 @@ struct TranscriptionApp: App {
             #endif
         }
 
+        // Filet de securite : l'autosave de SwiftData ne se declenche pas toujours
+        // (modifications faites ailleurs que via les sauvegardes explicites)
+        let mainContext = modelContainer.mainContext
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { mainContext.saveLogged("app en arriere-plan") }
+        }
+
         NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
             object: nil,

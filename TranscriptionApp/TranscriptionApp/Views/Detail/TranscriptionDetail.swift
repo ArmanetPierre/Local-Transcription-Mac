@@ -296,6 +296,7 @@ struct TranscriptionDetail: View {
 
         print("[Recovery] \(segments.count) segments retrouves, re-liaison au projet")
         project.segments = segments
+        modelContext.saveLogged("recuperation segments")
     }
 
     // MARK: - Segment List

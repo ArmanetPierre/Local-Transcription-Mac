@@ -44,6 +44,7 @@ struct SidebarView: View {
                                 if selection == project { selection = nil }
                                 SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
                                 modelContext.delete(project)
+                                modelContext.saveLogged("suppression")
                             }
                         }
                 }
@@ -54,6 +55,7 @@ struct SidebarView: View {
                         SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
                         modelContext.delete(project)
                     }
+                    modelContext.saveLogged("suppression")
                 }
             }
         }

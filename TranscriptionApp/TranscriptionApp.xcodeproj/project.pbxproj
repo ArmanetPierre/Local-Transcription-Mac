@@ -54,6 +54,7 @@
 		51E21CF3249948E37EDA9438 /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3025D8556E3F988DF702579 /* OllamaService.swift */; };
 		5495EED2D5E0286340E1805E /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */; };
 		553B23A32B0BCC47E5538E58 /* PythonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AED3012F64F96210ADF36451 /* PythonBridge.swift */; };
+		5884E05AE180C7A312A5CE6F /* ModelContext+Save.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC416BA60DF1D5175E25D8F1 /* ModelContext+Save.swift */; };
 		5BEE4598B9739BB5BDC9D56B /* TranscriptionListVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FC105EF3EAE408005334AC /* TranscriptionListVM.swift */; };
 		6178E420EE7FBD9BED49A271 /* TranscriptionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CC9219A80FD7F49ACD0E91 /* TranscriptionApp.swift */; };
 		65D28583172CEE23162952BA /* SpeakerSynthesisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FB6E5DA301471CD4021785 /* SpeakerSynthesisView.swift */; };
@@ -66,6 +67,7 @@
 		78BC99D8B5D0803BA9460945 /* PythonMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E84D06986052062D9F4507 /* PythonMessage.swift */; };
 		81EA8D3E62AA01D3A622069C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4652381313FAD80AED4548ED /* PrivacyInfo.xcprivacy */; };
 		873980B52C85C95722466A26 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6777AD2FA3565D02FF689 /* Enums.swift */; };
+		878F567A8FF7CE4F84633F01 /* ModelContext+Save.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC416BA60DF1D5175E25D8F1 /* ModelContext+Save.swift */; };
 		8E9516E94EEFAEDA824FEBF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F01DFCFBE0CCE955F2B1C43 /* ContentView.swift */; };
 		903EF381847DB4CDFA36B2E0 /* transcribe_bridge.py in Resources */ = {isa = PBXBuildFile; fileRef = A67667008E852A14411C763E /* transcribe_bridge.py */; };
 		91602B262CC27865048F1F8F /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CF5D4E00F970ACAFF82C17 /* AudioService.swift */; };
@@ -182,6 +184,7 @@
 		D344AC76C3DE725042CAE651 /* requirements.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = requirements.txt; sourceTree = "<group>"; };
 		D3CF5D4E00F970ACAFF82C17 /* AudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioService.swift; sourceTree = "<group>"; };
 		D6DA470B830A16E3046C2364 /* KnownVoicesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownVoicesSection.swift; sourceTree = "<group>"; };
+		DC416BA60DF1D5175E25D8F1 /* ModelContext+Save.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModelContext+Save.swift"; sourceTree = "<group>"; };
 		DF4DAE9F2493EC17B7EE102A /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		E2BCBA095CF1CD3704DBA604 /* TimeFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatting.swift; sourceTree = "<group>"; };
 		E3311BBB67E780B3E7E6F5CF /* RecordingVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingVM.swift; sourceTree = "<group>"; };
@@ -286,6 +289,7 @@
 				4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */,
 				8B8D07174F75A25BC11B62ED /* EstimationService.swift */,
 				52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */,
+				DC416BA60DF1D5175E25D8F1 /* ModelContext+Save.swift */,
 				907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */,
 				5503E27241A33DFFC7807729 /* SpeakerEmbeddingStore.swift */,
 				0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */,
@@ -579,6 +583,7 @@
 				41EA02BC3139D6598862EE7E /* MeetingReportExporter.swift in Sources */,
 				04B01DA97CFB01CB6A34D8F7 /* MeetingReportView.swift in Sources */,
 				FBA8406C26E6737ABF53D4D9 /* MenuBarView.swift in Sources */,
+				5884E05AE180C7A312A5CE6F /* ModelContext+Save.swift in Sources */,
 				F83C29A7C64002812265659B /* ModelSetupView.swift in Sources */,
 				7558A42C94F808FEEAA0F6AE /* NativeModels.swift in Sources */,
 				C8EB795CBC5756427704889A /* OllamaService.swift in Sources */,
@@ -632,6 +637,7 @@
 				4ADFD99BFE16EA352073886B /* MeetingReportExporter.swift in Sources */,
 				E0661B84061C89A15F3D5C5F /* MeetingReportView.swift in Sources */,
 				E589DBEB8262AA330FB1778D /* MenuBarView.swift in Sources */,
+				878F567A8FF7CE4F84633F01 /* ModelContext+Save.swift in Sources */,
 				35AE795E493BA7677F1CF26C /* NativeEngineSupport.swift in Sources */,
 				51E21CF3249948E37EDA9438 /* OllamaService.swift in Sources */,
 				DAE1468C74895C14F40E4BD6 /* ProgressOverlay.swift in Sources */,
