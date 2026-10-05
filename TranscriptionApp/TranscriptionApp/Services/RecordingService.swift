@@ -78,6 +78,17 @@ final class RecordingService: NSObject {
     private let writeLock = NSLock()
     private var isWriterStarted = false
 
+    // Debut reel de chaque piste (horloge hote), pour les aligner a la fusion
+    private var firstMicTime: TimeInterval?
+    private var firstSystemTime: TimeInterval?
+
+    /// Annulation d'echo sur le micro (voice processing d'Apple) : sans elle, le micro
+    /// reenregistre les participants sortant des haut-parleurs, en double de la piste systeme.
+    /// Desactivable pour comparer : defaults write <bundle id> recording_echo_cancellation -bool NO
+    private static var echoCancellationEnabled: Bool {
+        UserDefaults.standard.object(forKey: "recording_echo_cancellation") as? Bool ?? true
+    }
+
     // MARK: - Permission Checking
 
     func checkPermissions() async {
@@ -145,6 +156,8 @@ final class RecordingService: NSObject {
         self.assetWriter = writer
         self.assetWriterInput = writerInput
         self.isWriterStarted = false
+        self.firstSystemTime = nil
+        self.firstMicTime = nil
 
         // 4. Configure SCStream (audio-only, minimal video)
         let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
@@ -164,7 +177,20 @@ final class RecordingService: NSObject {
         // 5. Configure AVAudioEngine for microphone only (NO playerNode = no echo)
         let engine = AVAudioEngine()
         let inputNode = engine.inputNode
+        if Self.echoCancellationEnabled {
+            do {
+                try inputNode.setVoiceProcessingEnabled(true)
+                // Ne pas baisser le son de la reunion pendant l'enregistrement
+                inputNode.voiceProcessingOtherAudioDuckingConfiguration =
+                    .init(enableAdvancedDucking: false, duckingLevel: .min)
+                // Garder le bruit ambiant (AGC desactive : niveau stable pour Whisper)
+                inputNode.isVoiceProcessingAGCEnabled = false
+            } catch {
+                print("[RecordingService] Annulation d'echo indisponible: \(error)")
+            }
+        }
         let inputFormat = inputNode.outputFormat(forBus: 0)
+        print("[RecordingService] Format micro: \(inputFormat), voice processing: \(inputNode.isVoiceProcessingEnabled)")
 
         // Create mic output file (WAV for lossless temp storage)
         let micOutputFile = try AVAudioFile(
@@ -182,10 +208,13 @@ final class RecordingService: NSObject {
 
         // Install tap on inputNode to capture microphone directly
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) {
-            [weak self] buffer, _ in
+            [weak self] buffer, when in
             guard let self else { return }
             self.writeLock.lock()
             defer { self.writeLock.unlock() }
+            if self.firstMicTime == nil, when.isHostTimeValid {
+                self.firstMicTime = AVAudioTime.seconds(forHostTime: when.hostTime)
+            }
             do {
                 try self.micFile?.write(from: buffer)
             } catch {
@@ -260,6 +289,7 @@ final class RecordingService: NSObject {
 
         let systemURL = systemAudioTempURL
         let micURL = micTempURL
+        let micOffset = Self.micOffset(micStart: firstMicTime, systemStart: firstSystemTime)
         systemAudioTempURL = nil
         micTempURL = nil
 
@@ -274,7 +304,7 @@ final class RecordingService: NSObject {
         // 7. Async: merge the two tracks (file exists only after this completes)
         guard let finalURL, let systemURL, let micURL else { return finalURL }
         do {
-            try await Self.mergeTracks(systemURL: systemURL, micURL: micURL, outputURL: finalURL)
+            try await Self.mergeTracks(systemURL: systemURL, micURL: micURL, micOffset: micOffset, outputURL: finalURL)
             print("[RecordingService] Fusion terminee: \(finalURL.lastPathComponent)")
 
             // Clean up temp files
@@ -292,9 +322,24 @@ final class RecordingService: NSObject {
 
     // MARK: - Audio Merging
 
+    /// Decalage du debut de la piste micro par rapport a la piste systeme (secondes).
+    /// Le micro demarre avant la capture systeme : les poser toutes deux a 0 decale
+    /// les voix entre les pistes (effet d'echo).
+    static func micOffset(micStart: TimeInterval?, systemStart: TimeInterval?) -> TimeInterval {
+        guard let micStart, let systemStart else { return 0 }
+        let offset = micStart - systemStart
+        // Horloges incoherentes : ne pas risquer de desynchroniser davantage
+        guard abs(offset) < 5 else {
+            print("[RecordingService] Decalage micro aberrant (\(offset)s), ignore")
+            return 0
+        }
+        print("[RecordingService] Decalage micro/systeme: \(String(format: "%.3f", offset))s")
+        return offset
+    }
+
     /// Fusionne deux fichiers audio en un seul avec AVMutableComposition.
-    /// Les deux pistes sont superposees (pas concatenees).
-    private static func mergeTracks(systemURL: URL, micURL: URL, outputURL: URL) async throws {
+    /// Les deux pistes sont superposees (pas concatenees), le micro decale de `micOffset`.
+    private static func mergeTracks(systemURL: URL, micURL: URL, micOffset: TimeInterval, outputURL: URL) async throws {
         let composition = AVMutableComposition()
 
         // Add system audio track
@@ -318,11 +363,17 @@ final class RecordingService: NSObject {
             let compositionMicTrack = composition.addMutableTrack(
                 withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid
             )
-            try compositionMicTrack?.insertTimeRange(
-                CMTimeRange(start: .zero, duration: micDuration),
-                of: micAudioTrack,
-                at: .zero
-            )
+            // Micro parti apres le systeme : on le decale ; parti avant : on coupe son debut
+            let offset = CMTime(seconds: abs(micOffset), preferredTimescale: 48000)
+            let micStart: CMTime = micOffset < 0 ? offset : .zero
+            let insertAt: CMTime = micOffset > 0 ? offset : .zero
+            if micStart < micDuration {
+                try compositionMicTrack?.insertTimeRange(
+                    CMTimeRange(start: micStart, duration: micDuration - micStart),
+                    of: micAudioTrack,
+                    at: insertAt
+                )
+            }
         }
 
         // Export merged composition
@@ -396,6 +447,7 @@ extension RecordingService: SCStreamOutput {
         // Start writer on first sample
         if !isWriterStarted {
             let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+            firstSystemTime = timestamp.seconds
             writer.startWriting()
             writer.startSession(atSourceTime: timestamp)
             isWriterStarted = true
