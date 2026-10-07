@@ -18,6 +18,7 @@
 		0B47B807ACA8F027550E7248 /* HuggingFaceToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7C29C840919F7FF709CC3 /* HuggingFaceToken.swift */; };
 		0B7C47002B4458F30E439F1D /* SpeakerNameHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */; };
 		0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */ = {isa = PBXBuildFile; fileRef = 170DCEDA15AD1CCF6C976075 /* transcribe.py */; };
+		0F41A436FC09FBE345884CB9 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 07FEFEC963A06C161D2BF17E /* InfoPlist.xcstrings */; };
 		10B45E16BE9C94DA4B894D48 /* SpeakerColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907E07E012FCC7EDD75792E7 /* SpeakerColors.swift */; };
 		10FD8E0AF02CCAE229FEA365 /* RecordingMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EE1F968B4C46D899E0A235 /* RecordingMixer.swift */; };
 		114F63E38DBAFCC68841A15E /* ImportDropZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6642498EF0865E2C14763BB7 /* ImportDropZone.swift */; };
@@ -32,6 +33,7 @@
 		21BF6F46B261AA3970012F57 /* LocalAPIServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107AC9DE024A2753A71F2647 /* LocalAPIServer.swift */; };
 		23E068E1689C41B634B269F7 /* ExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A3F6FD17F6270FA0EEC492 /* ExportSheet.swift */; };
 		2986D0D1D0A890308F063357 /* TranscriptionDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6E880C1B3C8A5031714577 /* TranscriptionDetail.swift */; };
+		31D819835636C7EFF59A23F9 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 07FEFEC963A06C161D2BF17E /* InfoPlist.xcstrings */; };
 		337E6B8D682D07A885F02CE3 /* SpeakerBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D07F8E509A640A74107F102B /* SpeakerBadge.swift */; };
 		339F3EE73E998C7F210EB69A /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACE2C55EA9793BC7D1843D7 /* AppPaths.swift */; };
 		345A2A23A36368327B1D1C02 /* TranscriptionProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C2C22C1908D2178DF46AC8 /* TranscriptionProject.swift */; };
@@ -138,6 +140,7 @@
 /* Begin PBXFileReference section */
 		07EE1F968B4C46D899E0A235 /* RecordingMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingMixer.swift; sourceTree = "<group>"; };
 		07FB6E5DA301471CD4021785 /* SpeakerSynthesisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerSynthesisView.swift; sourceTree = "<group>"; };
+		07FEFEC963A06C161D2BF17E /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		0882026AF22A9DF939CD51DC /* TranscriptionAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TranscriptionAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		094C312805FEE4686429D8DA /* AudioPlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerBar.swift; sourceTree = "<group>"; };
 		0B10509CDA333A3C366D9A54 /* SpeakerNameHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerNameHistory.swift; sourceTree = "<group>"; };
@@ -339,6 +342,7 @@
 			isa = PBXGroup;
 			children = (
 				66178D29E0227C619444F7B9 /* Assets.xcassets */,
+				07FEFEC963A06C161D2BF17E /* InfoPlist.xcstrings */,
 				1687D2CC4E69B1EBFFCCD357 /* Localizable.xcstrings */,
 				D344AC76C3DE725042CAE651 /* requirements.txt */,
 				A67667008E852A14411C763E /* transcribe_bridge.py */,
@@ -555,6 +559,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1DC84E45136E6CC99E18B1B3 /* Assets.xcassets in Resources */,
+				0F41A436FC09FBE345884CB9 /* InfoPlist.xcstrings in Resources */,
 				5495EED2D5E0286340E1805E /* Localizable.xcstrings in Resources */,
 				45676C081D89436CE2A825AD /* requirements.txt in Resources */,
 				0E7B6A392E967BA3ADAE1CEE /* transcribe.py in Resources */,
@@ -568,6 +573,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DBAC996177A221BFA5E011E3 /* Assets.xcassets in Resources */,
+				31D819835636C7EFF59A23F9 /* InfoPlist.xcstrings in Resources */,
 				3E866AE13E074880775D6596 /* Localizable.xcstrings in Resources */,
 				81EA8D3E62AA01D3A622069C /* PrivacyInfo.xcprivacy in Resources */,
 				13D5944AD20E2313B6A81650 /* voxa_mcp.py in Resources */,

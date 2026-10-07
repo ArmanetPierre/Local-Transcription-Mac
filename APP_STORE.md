@@ -15,8 +15,9 @@ La version DMG (GitHub, mises à jour Sparkle) continue d'exister à côté : m�
    - Aucune capacité particulière à cocher (la sandbox se déclare dans l'app).
 3. **[App Store Connect → Apps](https://appstoreconnect.apple.com/apps)** → **+** → *Nouvelle app* :
    - Plateforme : **macOS**
-   - Nom : `Voxa` (s'il est déjà pris : `Voxa – Transcription de réunions` ou `Voxa: Meeting Transcription`)
-   - Langue principale : Français (ou Anglais si tu vises l'international)
+   - Nom : `Voxa` (s'il est déjà pris : `Voxa: Meeting Transcription`)
+   - Langue principale : **Anglais (U.S.)**
+4. Une fois l'app créée : page de la version → menu des langues en haut à droite (« English (U.S.) ») → **Ajouter une langue → Français**. Chaque langue a sa propre fiche (nom, sous-titre, description, mots-clés, captures). Sans captures françaises, l'App Store affiche les anglaises.
    - Bundle ID : `com.pierre.voxa.appstore`
    - SKU : `voxa-macos`
    - Accès : complet
@@ -49,7 +50,47 @@ Recommandé : l'installer via **TestFlight** sur ton Mac et faire un dernier tes
 - **Classification par âge** : répondre « Non / Aucun » partout → 4+
 - **Confidentialité de l'app** (questionnaire) : **« Données non collectées »**
 
-### Textes — Français
+### Texts — English (langue principale)
+
+**Subtitle**: `Private meeting transcription`
+
+**Promotional text**:
+`Transcribe your meetings on your Mac, no cloud: who said what, voices recognized from one meeting to the next, and Claude Code integration. Free, no account.`
+
+**Keywords**:
+`transcription,meeting,dictation,whisper,speech to text,diarization,speakers,subtitles,offline,notes`
+
+**Description**:
+```
+Voxa transcribes your meetings, calls and recordings right on your Mac. Nothing is sent to the cloud: your conversations stay with you.
+
+WHO SAID WHAT
+• Automatic speaker identification
+• Voice recognition: name someone once and Voxa recognizes them in your next meetings, in the room or on a video call
+• Word-level attribution: "OK", "yes" and interruptions go to the right person
+
+ACCURATE TRANSCRIPTION
+• Whisper large-v3-turbo, optimized for Apple silicon
+• English, French and 90+ languages, including meetings that mix languages
+• Audio and video files: m4a, mp3, wav, mov, mp4…
+
+MEETING RECORDING
+• Record your Mac's audio and your microphone from the menu bar
+• Transcription starts automatically when you stop
+
+AND THEN
+• Export to text, Markdown, SRT subtitles or JSON
+• Built-in player: click a sentence to hear it
+• Meeting reports with Ollama (optional, local)
+• Claude Code integration (MCP): ask Claude to transcribe a meeting and write the report
+
+100% LOCAL, 100% FREE
+No account, no subscription, no ads, no data collected. On first launch Voxa downloads the open-source models (about 1.6 GB), then works offline.
+
+Voxa is open source: github.com/ArmanetPierre/Local-Transcription-Mac
+```
+
+### Textes — Français (localisation)
 
 **Sous-titre** (30 car. max) :
 `Transcription locale de réunions`
@@ -90,48 +131,8 @@ Pas de compte, pas d'abonnement, pas de publicité, aucune donnée collectée. A
 Voxa est un projet open source : github.com/ArmanetPierre/Local-Transcription-Mac
 ```
 
-### Texts — English
-
-**Subtitle**: `Private meeting transcription`
-
-**Promotional text**:
-`Transcribe your meetings on your Mac, no cloud: who said what, voices recognized from one meeting to the next, and Claude Code integration. Free, no account.`
-
-**Keywords**:
-`transcription,meeting,dictation,whisper,speech to text,diarization,speakers,subtitles,offline,notes`
-
-**Description**:
-```
-Voxa transcribes your meetings, calls and recordings right on your Mac. Nothing is sent to the cloud: your conversations stay with you.
-
-WHO SAID WHAT
-• Automatic speaker identification
-• Voice recognition: name someone once and Voxa recognizes them in your next meetings, in the room or on a video call
-• Word-level attribution: "OK", "yes" and interruptions go to the right person
-
-ACCURATE TRANSCRIPTION
-• Whisper large-v3-turbo, optimized for Apple silicon
-• English, French and 90+ languages, including meetings that mix languages
-• Audio and video files: m4a, mp3, wav, mov, mp4…
-
-MEETING RECORDING
-• Record your Mac's audio and your microphone from the menu bar
-• Transcription starts automatically when you stop
-
-AND THEN
-• Export to text, Markdown, SRT subtitles or JSON
-• Built-in player: click a sentence to hear it
-• Meeting reports with Ollama (optional, local)
-• Claude Code integration (MCP): ask Claude to transcribe a meeting and write the report
-
-100% LOCAL, 100% FREE
-No account, no subscription, no ads, no data collected. On first launch Voxa downloads the open-source models (about 1.6 GB), then works offline.
-
-Voxa is open source: github.com/ArmanetPierre/Local-Transcription-Mac
-```
-
 ### Captures d'écran (obligatoire : 1 à 10)
-Taille acceptée : **2880 × 1800** (ou 2560 × 1600, 1440 × 900, 1280 × 800). Suggestions, avec une réunion fictive (lancer la version Debug avec `scripts/dev/fake_bridge.py`, voir README) :
+Captures en anglais (langue principale), app lancée en anglais ; captures françaises facultatives. Taille acceptée : **2880 × 1800** (ou 2560 × 1600, 1440 × 900, 1280 × 800). Suggestions, avec une réunion fictive (lancer la version Debug avec `scripts/dev/fake_bridge.py`, voir README) :
 1. Une transcription ouverte, intervenants nommés en couleur
 2. L'écran « Identifier les intervenants » (voix reconnues pré-remplies)
 3. La barre des menus pendant un enregistrement
