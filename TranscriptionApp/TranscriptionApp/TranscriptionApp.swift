@@ -217,11 +217,12 @@ struct TranscriptionApp: App {
         } label: {
             HStack(spacing: 4) {
                 if recordingVM.recordingService.isRecording {
-                    // Etat: enregistrement en cours
+                    // Etat: enregistrement en cours. Icone seule, sans chrono : macOS ajoute
+                    // son indicateur de capture au meme moment, et une icone qui s'elargit
+                    // finit cachee sous l'encoche (plus moyen d'arreter). Le chrono est dans
+                    // le menu et dans le bandeau de la fenetre.
                     Image(systemName: "record.circle.fill")
                         .symbolRenderingMode(.multicolor)
-                    Text(recordingVM.formattedElapsedTime)
-                        .font(.caption.monospacedDigit())
                 } else if listVM.isProcessing {
                     // Etat: transcription en cours
                     Image(systemName: "waveform.circle.fill")

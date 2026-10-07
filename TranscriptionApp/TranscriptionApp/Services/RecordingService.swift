@@ -70,7 +70,8 @@ final class RecordingService: NSObject {
     /// Vrai pendant le mixage final, apres l'arret
     var isFinishing = false
 
-    /// Appele quand l'enregistrement s'arrete de lui-meme (disque presque plein)
+    /// Appele quand l'enregistrement s'arrete hors de l'app (disque presque plein,
+    /// "Ne plus partager" dans l'indicateur de macOS) : le fichier doit etre importe
     @ObservationIgnored var onAutoStop: ((FinishedRecording?) -> Void)?
 
     // MARK: - Private
@@ -638,10 +639,20 @@ final class RecordingService: NSObject {
 
 extension RecordingService: SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        print("[RecordingService] Capture systeme interrompue par macOS: \(error)")
+        let nsError = error as NSError
+        // "Ne plus partager" dans l'indicateur de capture de macOS (barre des menus) :
+        // c'est l'utilisateur qui arrete, on termine l'enregistrement au lieu de relancer
+        let stoppedByUser = nsError.domain == SCStreamErrorDomain
+            && nsError.code == SCStreamError.Code.userStopped.rawValue
+        print("[RecordingService] Capture systeme \(stoppedByUser ? "arretee par l'utilisateur (indicateur macOS)" : "interrompue par macOS"): \(error)")
         Task { @MainActor in
             guard let session = self.session, session.stream === stream else { return }
-            self.restartSystemCapture(session)
+            if stoppedByUser {
+                let finished = await self.stopRecording(reason: "Ne plus partager (indicateur macOS)")
+                self.onAutoStop?(finished)
+            } else {
+                self.restartSystemCapture(session)
+            }
         }
     }
 }
