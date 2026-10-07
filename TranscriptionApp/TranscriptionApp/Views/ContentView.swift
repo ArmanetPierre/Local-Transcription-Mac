@@ -9,6 +9,9 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             SidebarView(viewModel: listVM, selection: $selectedProject)
+                // Sur la colonne elle-meme : applique a NavigationSplitView, SwiftUI
+                // l'ignorait et la barre laterale coupait les titres ("Bloom...")
+                .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 400)
         } detail: {
             detail
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -16,7 +19,6 @@ struct ContentView: View {
                     RecordingBanner(recordingVM: recordingVM, listVM: listVM)
                 }
         }
-        .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 400)
         .frame(minWidth: 900, minHeight: 600)
     }
 

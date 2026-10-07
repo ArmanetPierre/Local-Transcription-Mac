@@ -223,3 +223,11 @@ final class ObjCExceptionGuardTests: XCTestCase {
         XCTAssertNoThrow(try RecordingService.guarded("test") {})
     }
 }
+
+final class SpeakerColorsTests: XCTestCase {
+    func testTenSpeakersGetDistinctStableColors() {
+        let indices = (0..<10).map { SpeakerColors.index(for: String(format: "SPEAKER_%02d", $0)) }
+        XCTAssertEqual(Set(indices).count, 10, "deux intervenants auraient la meme couleur")
+        XCTAssertEqual(SpeakerColors.index(for: "Inconnu"), SpeakerColors.index(for: "Inconnu"))
+    }
+}
