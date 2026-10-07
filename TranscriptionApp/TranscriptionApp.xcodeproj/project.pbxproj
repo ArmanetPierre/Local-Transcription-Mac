@@ -782,7 +782,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.0;
+				MARKETING_VERSION = 1.6.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.voxa.appstore;
 				PRODUCT_MODULE_NAME = Voxa;
 				PRODUCT_NAME = Voxa;
@@ -1010,7 +1010,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.0;
+				MARKETING_VERSION = 1.6.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pierre.voxa.appstore;
 				PRODUCT_MODULE_NAME = Voxa;
 				PRODUCT_NAME = Voxa;
