@@ -2329,6 +2329,46 @@
           }
         }
       }
+    },
+    "Transcription %lld%%" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription %lld %"
+          }
+        }
+      }
+    },
+    "Diarization %lld%%" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diarisation %lld %"
+          }
+        }
+      }
+    },
+    "1 speaker" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 speaker"
+          }
+        }
+      }
+    },
+    "1 sample" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 empreinte"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

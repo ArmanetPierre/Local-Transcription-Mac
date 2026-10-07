@@ -73,23 +73,17 @@ struct TranscriptionRow: View {
     }
 
     private var statusText: String {
-        switch project.status {
-        case .pending:
-            "En attente"
+        let percent = Int(project.progressPercent)
+        let speakers = project.uniqueSpeakers.count
+        return switch project.status {
         case .transcribing:
-            "Transcription \(Int(project.progressPercent))%"
+            String(localized: "Transcription \(percent)%")
         case .diarizing:
-            "Diarisation \(Int(project.progressPercent))%"
-        case .merging:
-            "Attribution..."
-        case .awaitingSpeakerNames:
-            "Identification speakers"
-        case .generatingSummary:
-            "Synthese en cours..."
+            String(localized: "Diarization \(percent)%")
         case .completed:
-            "\(project.uniqueSpeakers.count) speaker\(project.uniqueSpeakers.count > 1 ? "s" : "")"
-        case .failed:
-            "Erreur"
+            speakers == 1 ? String(localized: "1 speaker") : String(localized: "\(speakers) speakers")
+        default:
+            project.status.label
         }
     }
 

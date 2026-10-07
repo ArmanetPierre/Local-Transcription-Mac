@@ -4,6 +4,7 @@ import SwiftUI
 struct TranscriptionDetail: View {
     @Bindable var project: TranscriptionProject
     var estimationService: EstimationService?
+    @State private var reportHeight: CGFloat = 400
     @State private var viewModel = TranscriptionDetailVM()
     @State private var scrollTarget: Int?
     @Environment(\.modelContext) private var modelContext
@@ -56,8 +57,11 @@ struct TranscriptionDetail: View {
                             )
                             SpeakerSynthesisView(project: project, viewModel: viewModel)
                         }
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { reportHeight = $0 }
                     }
-                    .frame(maxHeight: 400)
+                    // Hauteur du contenu (max 400) : un ScrollView prend sinon toute la hauteur
+                    // permise, et le compte rendu replie laissait un grand vide
+                    .frame(height: min(reportHeight, 400))
                     .background(Color(nsColor: .windowBackgroundColor).opacity(0.5))
                     Divider()
                 }
@@ -342,3 +346,4 @@ struct TranscriptionDetail: View {
         return time >= segment.startTime && time < segment.endTime
     }
 }
+

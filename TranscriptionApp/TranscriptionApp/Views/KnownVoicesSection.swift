@@ -19,7 +19,7 @@ struct KnownVoicesSection: View {
                     HStack {
                         Text(speaker.name)
                         Spacer()
-                        Text("\(speaker.samples) samples")
+                        Text(speaker.samples == 1 ? String(localized: "1 sample") : String(localized: "\(speaker.samples) samples"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .help("One sample per transcription where this person was named. More samples recognize them better across recording setups.")
