@@ -42,6 +42,7 @@ final class RecordingVM {
         Task { @MainActor in
             // Check permissions first
             await recordingService.checkPermissions()
+            print("[RecordingVM] Demande d'enregistrement : micro=\(recordingService.microphonePermission), audio systeme=\(recordingService.systemAudioPermission)")
 
             if recordingService.microphonePermission == .denied {
                 showPermissionAlert = true

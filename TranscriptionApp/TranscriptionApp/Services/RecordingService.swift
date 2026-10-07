@@ -161,6 +161,7 @@ final class RecordingService: NSObject {
                 systemAudioPermission = .granted
             }
         } catch {
+            print("[RecordingService] Audio systeme indisponible: \(error)")
             await MainActor.run {
                 systemAudioPermission = .denied
             }
