@@ -145,13 +145,10 @@ public final class NativeEngine {
             concurrentWorkerCount: 4,
             chunkingStrategy: .vad
         )
-        // Amorce ponctuee : WhisperKit decode chaque morceau (VAD) sans le texte
-        // precedent ; sans amorce, Whisper perd souvent ponctuation et majuscules
-        // et deforme des mots ("il ya", "elle est allee a l'est" pour "elle essaie").
-        if let prompt = language.flatMap({ Self.punctuationPrompts[$0] }), let tokenizer = whisperKit.tokenizer {
-            decoding.promptTokens = tokenizer.encode(text: " " + prompt)
-                .filter { $0 < tokenizer.specialTokens.specialTokenBegin }
-        }
+        // Pas d'amorce (promptTokens) : elle ameliorait un peu la ponctuation, mais
+        // decalait les horodatages des mots de plusieurs secondes, et donc
+        // l'attribution aux intervenants (banc 64 min : erreurs d'intervenant
+        // 5,4 % -> 3,5 %, WER 20,2 % -> 18,6 %, mots perdus 12 % -> 8,5 %).
         let results: [TranscriptionResult]
         do {
             results = try await whisperKit.transcribe(audioArray: audio, decodeOptions: decoding)
@@ -229,6 +226,10 @@ public final class NativeEngine {
 
             // 3. Attribution mot par mot
             emit(.stepStart(step: "speaker_assignment", number: 3, total: totalSteps))
+            // Diagnostic : VOXA_DEBUG_DUMP=fichier.json ecrit les tours et les mots horodates
+            if let dump = ProcessInfo.processInfo.environment["VOXA_DEBUG_DUMP"] {
+                Self.writeDebugDump(to: dump, segments: segments, turns: turns)
+            }
             segments = PostProcessing.splitBySpeaker(segments, turns: turns)
         }
 
@@ -241,17 +242,6 @@ public final class NativeEngine {
             speakerMatchScores: matchScores
         )))
     }
-
-    /// Phrases d'amorce ponctuees, par langue
-    static let punctuationPrompts: [String: String] = [
-        "fr": "Bonjour. Voici la transcription de la réunion, avec la ponctuation.",
-        "en": "Hello. Here is the transcript of the meeting, with punctuation.",
-        "es": "Hola. Esta es la transcripción de la reunión, con puntuación.",
-        "de": "Hallo. Hier ist das Protokoll der Besprechung, mit Zeichensetzung.",
-        "it": "Ciao. Ecco la trascrizione della riunione, con la punteggiatura.",
-        "pt": "Olá. Esta é a transcrição da reunião, com pontuação.",
-        "nl": "Hallo. Hier is het verslag van de vergadering, met interpunctie.",
-    ]
 
     /// Langue dominante : probabilites cumulees sur 3 passages de 30 s (debut,
     /// milieu, fin), pour ne pas se fier au seul debut d'une reunion.
@@ -295,5 +285,22 @@ final class ProgressGate: @unchecked Sendable {
         lock.lock()
         opened = true
         lock.unlock()
+    }
+
+}
+
+extension NativeEngine {
+    /// Donnees brutes de l'attribution (tours de diarisation, mots horodates), pour les tests.
+    static func writeDebugDump(to path: String, segments: [TranscriptSegment], turns: [SpeakerTurn]) {
+        let json: [String: Any] = [
+            "turns": turns.map { ["start": $0.start, "end": $0.end, "speaker": $0.speaker] },
+            "segments": segments.map { segment in
+                ["start": segment.start, "end": segment.end, "text": segment.text,
+                 "words": segment.words.map { ["text": $0.text, "start": $0.start, "end": $0.end] }]
+            },
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
     }
 }

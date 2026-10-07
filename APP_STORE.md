@@ -67,7 +67,7 @@ Voxa transcribes your meetings, calls and recordings right on your Mac. Nothing 
 WHO SAID WHAT
 • Automatic speaker identification
 • Voice recognition: name someone once and Voxa recognizes them in your next meetings, in the room or on a video call
-• Word-level attribution: "OK", "yes" and interruptions go to the right person
+• Quick exchanges are split at every change of speaker, short replies included
 
 ACCURATE TRANSCRIPTION
 • Whisper large-v3-turbo, optimized for Apple silicon
@@ -108,7 +108,7 @@ Voxa transcrit vos réunions, appels et enregistrements directement sur votre Ma
 QUI A DIT QUOI
 • Identification automatique des intervenants
 • Reconnaissance des voix : nommez une personne une fois, Voxa la reconnaît dans les réunions suivantes, en salle comme en visio
-• Attribution mot par mot : les « OK », « oui » et interruptions vont à la bonne personne
+• Les échanges rapides sont découpés à chaque changement d'intervenant, répliques courtes comprises
 
 TRANSCRIPTION PRÉCISE
 • Modèle Whisper large-v3-turbo, optimisé pour la puce Apple
