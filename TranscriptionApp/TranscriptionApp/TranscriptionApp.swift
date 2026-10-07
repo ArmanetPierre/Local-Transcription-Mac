@@ -212,7 +212,9 @@ struct TranscriptionApp: App {
             #endif
         }
 
-        MenuBarExtra {
+        // VOXA_NO_MENU_BAR=1 : copie de test (captures, essais) sans icone dans la barre des
+        // menus, pour ne pas la confondre avec la vraie app et y lancer un enregistrement
+        MenuBarExtra(isInserted: .constant(ProcessInfo.processInfo.environment["VOXA_NO_MENU_BAR"] == nil)) {
             MenuBarView(listVM: listVM, recordingVM: recordingVM)
         } label: {
             HStack(spacing: 4) {

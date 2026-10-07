@@ -1,4 +1,5 @@
 import AVFoundation
+import SwiftData
 import XCTest
 @testable import Voxa
 
@@ -229,5 +230,35 @@ final class SpeakerColorsTests: XCTestCase {
         let indices = (0..<10).map { SpeakerColors.index(for: String(format: "SPEAKER_%02d", $0)) }
         XCTAssertEqual(Set(indices).count, 10, "deux intervenants auraient la meme couleur")
         XCTAssertEqual(SpeakerColors.index(for: "Inconnu"), SpeakerColors.index(for: "Inconnu"))
+    }
+}
+
+@MainActor
+final class ProjectDeletionTests: XCTestCase {
+    /// Supprimer une transcription efface sa copie audio, jamais un fichier hors du dossier de Voxa
+    func testDeleteRemovesStoredAudioOnly() throws {
+        let container = try ModelContainer(for: TranscriptionProject.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let vm = TranscriptionListVM()
+        let storage = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Voxa/Audio", isDirectory: true)
+        try FileManager.default.createDirectory(at: storage, withIntermediateDirectories: true)
+        let stored = storage.appendingPathComponent("test-\(UUID().uuidString).m4a")
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("outside-\(UUID().uuidString).m4a")
+        FileManager.default.createFile(atPath: stored.path, contents: Data([1]))
+        FileManager.default.createFile(atPath: outside.path, contents: Data([1]))
+        defer { try? FileManager.default.removeItem(at: outside) }
+
+        let a = TranscriptionProject.create(audioURL: stored)
+        let b = TranscriptionProject.create(audioURL: outside)
+        context.insert(a)
+        context.insert(b)
+        try context.save()
+
+        vm.delete(a, modelContext: context)
+        vm.delete(b, modelContext: context)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stored.path), "copie de Voxa supprimee")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: outside.path), "fichier d'origine intact")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TranscriptionProject>()), 0)
     }
 }

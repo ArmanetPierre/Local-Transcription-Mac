@@ -520,6 +520,27 @@ final class TranscriptionListVM {
         batchQueue.removeAll { $0.path == project.audioFilePath }
     }
 
+    /// Supprime une transcription ET sa copie audio : sinon l'enregistrement restait sur le
+    /// disque alors que l'utilisateur le croyait supprime. Seuls les fichiers du dossier
+    /// audio de Voxa sont effaces, jamais un fichier d'origine de l'utilisateur.
+    func delete(_ project: TranscriptionProject, modelContext: ModelContext) {
+        guard currentProject?.id != project.id else { return }
+        removeFromQueue(project)
+        SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
+        let audio = URL(fileURLWithPath: project.audioFilePath).standardizedFileURL
+        modelContext.delete(project)
+        do {
+            try modelContext.save()
+        } catch {
+            print("[ListVM] ERREUR suppression: \(error)")
+            return
+        }
+        let storage = Self.audioStorageDirectory.standardizedFileURL.path + "/"
+        if audio.path.hasPrefix(storage) {
+            try? FileManager.default.removeItem(at: audio)
+        }
+    }
+
     /// Fermeture de l'app : arreter le moteur sans marquer la transcription en echec.
     func stopForQuit() {
         isQuitting = true
