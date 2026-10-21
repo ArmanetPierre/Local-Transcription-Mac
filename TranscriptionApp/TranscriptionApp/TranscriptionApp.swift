@@ -22,8 +22,11 @@ struct TranscriptionApp: App {
 
     /// Vrai quand l'app sert d'hote aux tests unitaires
     static let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    /// API locale pour le serveur MCP (Claude Code)
+    #if !APPSTORE
+    /// API locale pour le serveur MCP (Claude Code). Absente de l'edition App Store
+    /// (pas de serveur en ecoute, pas d'entitlement network.server).
     let apiServer: LocalAPIServer
+    #endif
 
     init() {
         if !Self.isRunningTests {
@@ -67,14 +70,13 @@ struct TranscriptionApp: App {
         recordingVM.modelContainer = modelContainer
         recordingVM.configure(listVM: listVM)
         self._recordingVM = State(initialValue: recordingVM)
+        #if !APPSTORE
         self.apiServer = LocalAPIServer(listVM: listVM, modelContainer: modelContainer)
         // Pas d'API pendant les tests unitaires (l'app sert d'hote aux tests)
         if !Self.isRunningTests {
             apiServer.start()
-            #if APPSTORE
-            ScriptDeployment.deployMCPScript()
-            #endif
         }
+        #endif
 
         // Filet de securite : l'autosave de SwiftData ne se declenche pas toujours
         // (modifications faites ailleurs que via les sauvegardes explicites)

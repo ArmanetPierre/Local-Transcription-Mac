@@ -4,6 +4,8 @@ Version App Store : cible Xcode **VoxaAppStore** (identifiant `com.pierre.voxa.a
 
 La version DMG (GitHub, mises à jour Sparkle) continue d'exister à côté : même code, cible `TranscriptionApp`.
 
+**Pas de serveur local ni d'intégration Claude Code (MCP) dans l'édition App Store.** Apple a refusé deux fois la soumission à cause de l'entitlement `com.apple.security.network.server` (guideline 2.4.5). Depuis la build 1.6.1 (3), la cible VoxaAppStore ne compile plus `LocalAPIServer`, `FolderAccess`, `ScriptDeployment` ni `voxa_mcp.py` (exclus dans `project.yml`, et `#if !APPSTORE` autour du démarrage et des réglages MCP). Ses entitlements : sandbox, `network.client` (téléchargement des modèles, Ollama local), micro, fichiers choisis par l'utilisateur ; plus de `network.server` ni de `files.bookmarks.app-scope`. L'intégration Claude Code n'existe que dans la version directe (DMG).
+
 ---
 
 ## Étape 1 — Compte Apple (toi, ~15 min)
@@ -55,7 +57,7 @@ Recommandé : l'installer via **TestFlight** sur ton Mac et faire un dernier tes
 **Subtitle**: `Private meeting transcription`
 
 **Promotional text**:
-`Transcribe your meetings on your Mac, no cloud: who said what, voices recognized from one meeting to the next, and Claude Code integration. Free, no account.`
+`Transcribe your meetings on your Mac, no cloud: who said what, and voices recognized from one meeting to the next. Free, no account, no data collected.`
 
 **Keywords**:
 `transcription,meeting,dictation,whisper,speech to text,diarization,speakers,subtitles,offline,notes`
@@ -82,7 +84,6 @@ AND THEN
 • Export to text, Markdown, SRT subtitles or JSON
 • Built-in player: click a sentence to hear it
 • Meeting reports with Ollama (optional, local)
-• Claude Code integration (MCP): ask Claude to transcribe a meeting and write the report
 
 100% LOCAL, 100% FREE
 No account, no subscription, no ads, no data collected. On first launch Voxa downloads the open-source models (about 1.6 GB), then works offline.
@@ -96,7 +97,7 @@ Voxa is open source: github.com/ArmanetPierre/Local-Transcription-Mac
 `Transcription locale de réunions`
 
 **Texte promotionnel** (170 car. max) :
-`Transcrivez vos réunions sur votre Mac, sans cloud : qui a dit quoi, voix reconnues d'une réunion à l'autre, et intégration Claude Code. Gratuit et sans compte.`
+`Transcrivez vos réunions sur votre Mac, sans cloud : qui a dit quoi et voix reconnues d'une réunion à l'autre. Gratuit, sans compte, aucune donnée collectée.`
 
 **Mots-clés** (100 car. max, séparés par des virgules) :
 `transcription,réunion,dictée,whisper,audio,compte rendu,diarisation,intervenants,sous-titres,local`
@@ -123,7 +124,6 @@ ET ENSUITE
 • Export en texte, Markdown, sous-titres SRT ou JSON
 • Lecteur intégré : cliquez sur une phrase pour l'écouter
 • Comptes rendus avec Ollama (facultatif, en local)
-• Intégration Claude Code (MCP) : demandez à Claude de transcrire une réunion et d'en faire le compte rendu
 
 100 % LOCAL, 100 % GRATUIT
 Pas de compte, pas d'abonnement, pas de publicité, aucune donnée collectée. Au premier lancement, Voxa télécharge les modèles open source (environ 1,6 Go), puis fonctionne sans internet.
@@ -149,7 +149,7 @@ Voxa transcribes audio and video files locally (Whisper via WhisperKit, speaker 
 - On first launch, the app downloads open-source Core ML model weights (about 1.6 GB) from Hugging Face (argmaxinc/whisperkit-coreml and argmaxinc/speakerkit-coreml). These are data files only, no executable code is downloaded. The download and Core ML optimization take a few minutes on first launch.
 - To test: click "Download and prepare", wait for completion, then drag any audio file (m4a/mp3/wav) into the window. A transcript with speakers appears after processing.
 - Microphone and screen recording permissions are requested only when the user starts a meeting recording from the menu bar (to capture the other participants' audio and the user's voice).
-- Optional: the app runs a local HTTP server bound to 127.0.0.1 only, protected by a random token stored in the app container, used by the user's own Claude Code installation (Model Context Protocol). It is never reachable from the network.
+- The app does not run any server and does not accept incoming network connections (no com.apple.security.network.server entitlement). It only makes outgoing connections to download the models and, optionally, to a local Ollama.
 - Optional: meeting reports use Ollama if the user already runs it on their Mac (localhost). The app works fully without it.
 - No user data is collected or transmitted.
 ```
@@ -162,8 +162,9 @@ App Store Connect → ta version 1.6.0 → sélectionner le **build** envoyé �
 | Règle | Risque | Ce qui est prévu |
 |---|---|---|
 | 2.5.2 (code téléchargé) | Le téléchargement des modèles | Ce sont des poids de modèles (données), expliqué dans les notes |
-| 4.2.3 (dépendance à une autre app) | Ollama, Claude Code | Facultatifs, l'app fonctionne entièrement sans |
-| 5.1.1 (confidentialité) | Micro, écran, serveur local | Demandés seulement à l'usage, serveur local sur 127.0.0.1, rien collecté |
+| 4.2.3 (dépendance à une autre app) | Ollama | Facultatif, l'app fonctionne entièrement sans |
+| 5.1.1 (confidentialité) | Micro, écran | Demandés seulement à l'usage, rien collecté |
+| 2.4.5 (entitlements) | `network.server` (refusé deux fois) | Retiré : plus de serveur local dans l'édition App Store (build 3) |
 | 2.1 (app complète) | Premier lancement long | Écran d'accueil qui explique le téléchargement et la préparation |
 
 ## Mises à jour ensuite
@@ -177,4 +178,4 @@ Après une mise à jour, Core ML reprépare les modèles en arrière-plan au pre
 ## Pour se faire connaître
 - Lien App Store dans le README et sur la page GitHub
 - Billet « Transcrire ses réunions en local sur Mac » (LinkedIn, Product Hunt, Reddit r/macapps)
-- L'intégration Claude Code (MCP) est un bon angle : peu d'apps de transcription le proposent
+- L'intégration Claude Code (MCP) est un bon angle pour la version directe (DMG) : peu d'apps de transcription le proposent. Elle n'existe pas dans l'édition App Store.

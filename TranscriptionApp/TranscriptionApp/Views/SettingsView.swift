@@ -8,8 +8,6 @@ struct SettingsView: View {
     /// Updater de l'app (deja demarre). SwiftUI recree cette vue a chaque
     /// rafraichissement de l'app : rien de couteux ne doit etre fait dans init.
     let updater: SPUUpdater
-    #else
-    @State private var folderAccess = FolderAccess.shared
     #endif
 
     @State private var hfToken = ""
@@ -26,14 +24,13 @@ struct SettingsView: View {
     @State private var reinstallLog = ""
     @State private var mcpCommandCopied = false
 
+    #if !APPSTORE
+    // Integration Claude Code (MCP) : version directe uniquement
     private var claudeMCPCommand: String {
-        #if APPSTORE
-        let python = "python3"
-        #else
         let python = FileManager.default.fileExists(atPath: pythonPath) ? pythonPath : "python3"
-        #endif
         return "claude mcp add voxa --scope user -- \"\(python)\" \"\(LocalAPIServer.mcpScriptPath)\""
     }
+    #endif
 
     var body: some View {
         Form {
@@ -115,6 +112,7 @@ struct SettingsView: View {
 
             KnownVoicesSection()
 
+            #if !APPSTORE
             Section("Claude Code (MCP)") {
                 Text("Let Claude Code transcribe your meetings, read transcripts and write meeting reports in Voxa. Run this command once in a terminal:")
                     .font(.caption)
@@ -136,34 +134,8 @@ struct SettingsView: View {
                 Text("Voxa must be running for Claude to use it (it is opened automatically if needed).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-
-                #if APPSTORE
-                // Sandbox : Claude ne peut faire transcrire que les dossiers autorises ici
-                Text("Allowed folders: Claude Code can ask Voxa to transcribe files located in these folders.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                ForEach(folderAccess.folders, id: \.self) { folder in
-                    HStack {
-                        Image(systemName: "folder")
-                        Text(folder.path)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer()
-                        Button(role: .destructive) {
-                            folderAccess.remove(folder)
-                        } label: {
-                            Image(systemName: "minus.circle")
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                    .font(.caption)
-                }
-                Button("Add Folder...") {
-                    folderAccess.addFolder()
-                }
-                .controlSize(.small)
-                #endif
             }
+            #endif
 
             #if !APPSTORE
             Section("Updates") {
