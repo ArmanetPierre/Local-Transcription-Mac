@@ -16,10 +16,28 @@ struct ContentView: View {
             detail
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .safeAreaInset(edge: .top, spacing: 0) {
-                    RecordingBanner(recordingVM: recordingVM, listVM: listVM)
+                    VStack(spacing: 0) {
+                        #if APPSTORE
+                        // Preparation des modeles en cours, quand une transcription est
+                        // affichee (l'accueil et l'attente d'une transcription ont leur carte)
+                        if let project = selectedProject, project.status != .pending {
+                            ModelPreparationBanner()
+                        }
+                        #endif
+                        RecordingBanner(recordingVM: recordingVM, listVM: listVM)
+                    }
                 }
         }
         .frame(minWidth: 900, minHeight: 600)
+    }
+
+    /// Edition App Store : accueil tant que les modeles se preparent
+    private var showsModelWelcome: Bool {
+        #if APPSTORE
+        !NativeModels.shared.isPrepared
+        #else
+        false
+        #endif
     }
 
     @ViewBuilder
@@ -32,6 +50,10 @@ struct ContentView: View {
             // Etat propre a chaque projet (audio charge, noms en cours de saisie) :
             // sans cela, les noms saisis pour un projet s'appliquaient au suivant
             .id(project.id)
+        } else if showsModelWelcome {
+            #if APPSTORE
+            ModelWelcomeView()
+            #endif
         } else {
             ContentUnavailableView(
                 "No transcription selected",

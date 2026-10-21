@@ -68,13 +68,35 @@ struct ProgressOverlay: View {
             }
 
             if project.status == .pending {
-                Text("Waiting to process...")
-                    .foregroundStyle(.secondary)
+                if waitingForModels {
+                    Text("Waiting for the transcription models. Transcription starts automatically when they are ready.")
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: 360)
+                    #if APPSTORE
+                    ModelPreparationStatus()
+                        .padding(14)
+                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                        .frame(maxWidth: 520)
+                    #endif
+                } else {
+                    Text("Waiting to process...")
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Edition App Store : les modeles se preparent encore (premier lancement)
+    private var waitingForModels: Bool {
+        #if APPSTORE
+        !NativeModels.shared.isPrepared
+        #else
+        false
+        #endif
     }
 
     private var statusIcon: String {

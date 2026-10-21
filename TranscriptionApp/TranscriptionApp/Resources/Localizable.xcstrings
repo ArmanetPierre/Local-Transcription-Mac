@@ -1419,7 +1419,6 @@
       }
     },
     "Retry" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2366,6 +2365,186 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 empreinte"
+          }
+        }
+      }
+    },
+    "Downloading the transcription models" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement des modèles de transcription"
+          }
+        }
+      }
+    },
+    "Downloading the speaker identification models" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement des modèles d'identification des intervenants"
+          }
+        }
+      }
+    },
+    "Optimizing the models for this Mac" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimisation des modèles pour ce Mac"
+          }
+        }
+      }
+    },
+    "Loading the models" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement des modèles"
+          }
+        }
+      }
+    },
+    "Preparing the transcription models" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation des modèles de transcription"
+          }
+        }
+      }
+    },
+    "Step 1 of 2" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape 1 sur 2"
+          }
+        }
+      }
+    },
+    "Step 2 of 2" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape 2 sur 2"
+          }
+        }
+      }
+    },
+    "One-time step, done offline. It usually takes a few minutes. You can already import files or record a meeting: transcription starts automatically when the models are ready." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape unique, faite hors ligne. Elle prend en général quelques minutes. Vous pouvez déjà importer des fichiers ou enregistrer une réunion : la transcription démarrera d'elle-même quand les modèles seront prêts."
+          }
+        }
+      }
+    },
+    "One-time setup. You can already import files or record a meeting: transcription starts automatically when the models are ready." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation unique. Vous pouvez déjà importer des fichiers ou enregistrer une réunion : la transcription démarrera d'elle-même quand les modèles seront prêts."
+          }
+        }
+      }
+    },
+    "%@ of %@ (%lld%%)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@ (%3$lld %%)"
+          }
+        }
+      }
+    },
+    "%@ elapsed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ écoulées"
+          }
+        }
+      }
+    },
+    "Transcription models not ready" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles de transcription pas encore prêts"
+          }
+        }
+      }
+    },
+    "Download the transcription models (once)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger les modèles de transcription (une seule fois)"
+          }
+        }
+      }
+    },
+    "Optimize them for this Mac (once, a few minutes)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les optimiser pour ce Mac (une seule fois, quelques minutes)"
+          }
+        }
+      }
+    },
+    "You don't have to wait: import an audio file or record a meeting now. Voxa transcribes it as soon as the models are ready." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inutile d'attendre : importez un fichier audio ou enregistrez une réunion dès maintenant. Voxa le transcrira dès que les modèles seront prêts."
+          }
+        }
+      }
+    },
+    "Waiting for the transcription models. Transcription starts automatically when they are ready." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente des modèles de transcription. La transcription démarrera d'elle-même quand ils seront prêts."
+          }
+        }
+      }
+    },
+    "The download was interrupted. Check your internet connection: Voxa will resume automatically when you are back online, or click Retry." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement a été interrompu. Vérifiez votre connexion internet : Voxa reprendra de lui-même au retour de la connexion, ou cliquez sur Réessayer."
+          }
+        }
+      }
+    },
+    "The transcription models could not be prepared (%@). Click Retry to try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modèles de transcription n'ont pas pu être préparés (%@). Cliquez sur Réessayer pour recommencer."
           }
         }
       }

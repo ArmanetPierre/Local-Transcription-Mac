@@ -132,3 +132,96 @@ final class SpuriousSpeakerTests: XCTestCase {
         XCTAssertTrue(PostProcessing.spuriousSpeakers([SpeakerTurn(start: 0, end: 2, speaker: "A")], audioDuration: 600).isEmpty)
     }
 }
+
+// Preparation des modeles (premier lancement de l'edition App Store)
+final class ModelPreparationTests: XCTestCase {
+    private var root: URL!
+
+    override func setUpWithError() throws {
+        root = FileManager.default.temporaryDirectory.appendingPathComponent("voxa-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: root)
+    }
+
+    private func write(_ relative: String, bytes: Int = 10) throws {
+        let url = root.appendingPathComponent(relative)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(count: bytes).write(to: url)
+    }
+
+    private func writeModel(_ engine: NativeEngine) throws {
+        let folder = "models/argmaxinc/whisperkit-coreml/openai_whisper-\(engine.whisperVariant)"
+        for name in ["MelSpectrogram", "AudioEncoder", "TextDecoder"] {
+            try write("\(folder)/\(name).mlmodelc/coremldata.bin")
+        }
+    }
+
+    func testTreeSizeUsesLFSSize() throws {
+        let json = """
+        [{"type":"file","path":"a/config.json","size":120},
+         {"type":"file","path":"a/AudioEncoder.mlmodelc/weights/weight.bin","size":134,"lfs":{"size":1200000000}},
+         {"type":"directory","path":"a/AudioEncoder.mlmodelc","size":0}]
+        """
+        XCTAssertEqual(try NativeEngine.parseTreeSize(Data(json.utf8)), 1_200_000_120)
+    }
+
+    func testDownloadFraction() {
+        XCTAssertNil(PreparationProgress(phase: .downloading).downloadFraction)
+        XCTAssertEqual(PreparationProgress(phase: .downloading, bytesDownloaded: 25, bytesTotal: 100).downloadFraction, 0.25)
+        XCTAssertEqual(PreparationProgress(phase: .downloading, bytesDownloaded: 120, bytesTotal: 100).downloadFraction, 1)
+    }
+
+    func testModelFolderLayoutMatchesHubCache() {
+        let engine = NativeEngine(modelsDirectory: root)
+        XCTAssertEqual(
+            engine.whisperModelFolder.path,
+            root.appendingPathComponent("models/argmaxinc/whisperkit-coreml/openai_whisper-\(NativeEngine.whisperModel)").path
+        )
+    }
+
+    func testCompleteDetection() throws {
+        let engine = NativeEngine(modelsDirectory: root)
+        XCTAssertFalse(engine.isWhisperModelDownloaded)
+        // Dossier telecharge par une version precedente (sans marqueur) : accepte
+        try writeModel(engine)
+        XCTAssertTrue(engine.isWhisperModelDownloaded)
+        // Un fichier encore .incomplete : telechargement a reprendre
+        try write("models/argmaxinc/whisperkit-coreml/.cache/huggingface/download/openai_whisper-\(engine.whisperVariant)/AudioEncoder.mlmodelc/weights/weight.bin.abc.incomplete")
+        XCTAssertFalse(engine.isWhisperModelDownloaded)
+        // Le marqueur ecrit apres un telechargement complet fait foi
+        try write("models/argmaxinc/whisperkit-coreml/openai_whisper-\(engine.whisperVariant)/\(NativeEngine.completeMarker)", bytes: 0)
+        XCTAssertTrue(engine.isWhisperModelDownloaded)
+    }
+
+    func testBytesOnDiskCountsIncompleteButNotMetadata() throws {
+        try write("a/weight.bin", bytes: 1000)
+        try write("cache/weight.bin.etag.incomplete", bytes: 500)
+        try write("cache/weight.bin.metadata", bytes: 80)
+        XCTAssertEqual(NativeEngine.bytesOnDisk([root.appendingPathComponent("a"), root.appendingPathComponent("cache")]), 1500)
+    }
+
+    func testRemoveOtherVariantsKeepsCurrent() throws {
+        let old = NativeEngine(modelsDirectory: root, whisperVariant: "large-v3-v20240930_turbo")
+        let new = NativeEngine(modelsDirectory: root, whisperVariant: "large-v3-v20240930_turbo_632MB")
+        try writeModel(old)
+        try writeModel(new)
+        try write("models/argmaxinc/whisperkit-coreml/.cache/huggingface/download/openai_whisper-large-v3-v20240930_turbo/x.metadata")
+        try write("models/argmaxinc/whisperkit-coreml/config.json")
+        let removed = new.removeOtherWhisperVariants()
+        XCTAssertEqual(removed.count, 2)
+        XCTAssertFalse(old.isWhisperModelDownloaded)
+        XCTAssertTrue(new.isWhisperModelDownloaded)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("models/argmaxinc/whisperkit-coreml/config.json").path))
+    }
+
+    func testNetworkErrorDetection() {
+        XCTAssertTrue(NativeEngine.isNetworkError(URLError(.notConnectedToInternet)))
+        XCTAssertTrue(NativeEngine.isNetworkError(URLError(.timedOut)))
+        let wrapped = NSError(domain: "WhisperKit", code: 1, userInfo: [NSUnderlyingErrorKey: URLError(.networkConnectionLost)])
+        XCTAssertTrue(NativeEngine.isNetworkError(wrapped))
+        XCTAssertFalse(NativeEngine.isNetworkError(NSError(domain: "CoreML", code: 3, userInfo: [NSLocalizedDescriptionKey: "Model file not found"])))
+    }
+}

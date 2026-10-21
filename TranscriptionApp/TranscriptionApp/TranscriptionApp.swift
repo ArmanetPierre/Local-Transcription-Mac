@@ -153,17 +153,15 @@ struct TranscriptionApp: App {
         WindowGroup {
             Group {
                 #if APPSTORE
-                if nativeModels.isPrepared || nativeModels.hasDownloadedModels {
-                    ContentView(listVM: listVM, recordingVM: recordingVM)
-                                    .task {
-                            guard !Self.isRunningTests else { return }
-                            await launchTasksOnce()
-                            // Apres une mise a jour, Core ML reprepare les modeles
-                            nativeModels.prepareInBackgroundIfNeeded()
-                        }
-                } else {
-                    ModelSetupView(models: nativeModels)
-                }
+                // Jamais bloquant : les modeles se preparent en arriere-plan (bandeau
+                // de progression), l'app est utilisable tout de suite
+                ContentView(listVM: listVM, recordingVM: recordingVM)
+                    .task {
+                        guard !Self.isRunningTests else { return }
+                        // Premier lancement, mise a jour ou changement de modele
+                        nativeModels.prepareInBackgroundIfNeeded()
+                        await launchTasksOnce()
+                    }
                 #else
                 if setupCompleted {
                     ContentView(listVM: listVM, recordingVM: recordingVM)

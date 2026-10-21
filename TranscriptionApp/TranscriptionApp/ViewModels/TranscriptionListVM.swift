@@ -201,6 +201,20 @@ final class TranscriptionListVM {
             print("[ListVM] Queue vide, rien a traiter")
             return
         }
+        #if APPSTORE
+        // Modeles pas encore prets (premier lancement, mise a jour) : les fichiers
+        // restent en attente dans la file, elle reprend d'elle-meme une fois prets
+        let models = NativeModels.shared
+        if !models.isPrepared {
+            print("[ListVM] Modeles en preparation : \(batchQueue.count) fichier(s) en attente")
+            models.onReady = { [weak self] in
+                guard let self, !self.bridge.isRunning, self.currentProject == nil else { return }
+                self.processNext(modelContext: modelContext)
+            }
+            models.prepareInBackgroundIfNeeded()
+            return
+        }
+        #endif
         let url = batchQueue.removeFirst()
         print("[ListVM] processNext: \(url.lastPathComponent), restant en queue: \(batchQueue.count)")
 
