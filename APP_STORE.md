@@ -147,7 +147,7 @@ Voxa transcribes audio and video files locally (Whisper via WhisperKit, speaker 
 
 - No account is needed.
 - On first launch, the app downloads open-source Core ML model weights (about 650 MB, a compressed Whisper large-v3 turbo) from Hugging Face (argmaxinc/whisperkit-coreml and argmaxinc/speakerkit-coreml). These are data files only, no executable code is downloaded.
-- The app is usable immediately: the download and the one-time Core ML optimization for the Mac run in the background, with a progress card showing the downloaded size and percentage, then the optimization step with elapsed time. On our M3 test Mac, the full preparation takes about 4 minutes (download under 1 minute, optimization about 3 minutes). If the network drops, the app shows a clear message with a Retry button and resumes the download where it stopped.
+- The app is usable immediately: the download and the one-time Core ML optimization for the Mac run in the background, with a progress card showing the downloaded size and percentage, then the optimization step with elapsed time. On our M3 Pro test Mac, the full preparation takes about 4 minutes (download under 1 minute, optimization about 3 minutes). If the network drops, the app shows a clear message with a Retry button and resumes the download where it stopped.
 - To test: launch the app, then right away drag any audio file (m4a/mp3/wav) into the window (or click +). The file waits in the queue ("Waiting for the transcription models") and is transcribed automatically as soon as the models are ready. A transcript with speakers appears after processing.
 - Microphone and screen recording permissions are requested only when the user starts a meeting recording from the menu bar (to capture the other participants' audio and the user's voice).
 - The app does not run any server and does not accept incoming network connections (no com.apple.security.network.server entitlement). It only makes outgoing connections to download the models and, optionally, to a local Ollama.
@@ -180,7 +180,7 @@ Message proposé pour le Resolution Center :
 Thank you for the review. In this build (1.6.1, build 4):
 - Voxa no longer blocks on first launch. The main window is usable immediately; the model download and the one-time Core ML optimization run in the background. Files imported or recorded meanwhile wait in the queue and are transcribed automatically when the models are ready.
 - The progress is now explicit: downloaded size and percentage, then the "Optimizing for this Mac" step with elapsed time. Network errors show a Retry button and the download resumes where it stopped.
-- The download is 2.5 times smaller (about 650 MB instead of 1.6 GB, a compressed model with equivalent accuracy). On our M3 test Mac the complete preparation takes about 4 minutes, during which the app can be used.
+- The download is 2.5 times smaller (about 650 MB instead of 1.6 GB, a compressed model with equivalent accuracy). On our M3 Pro test Mac the complete preparation takes about 4 minutes, during which the app can be used.
 ```
 
 ## Étape 5 — Soumettre (toi)
