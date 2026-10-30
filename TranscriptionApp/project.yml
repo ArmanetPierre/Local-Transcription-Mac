@@ -61,8 +61,8 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Voxa uses the microphone to record your voice during meetings."
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: false
-        MARKETING_VERSION: "1.6.0"
-        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "1.6.1"
+        CURRENT_PROJECT_VERSION: "7"
 
   TranscriptionAppTests:
     type: bundle.unit-test
