@@ -44,8 +44,12 @@ final class TranscriptionListVM {
         return type.conforms(to: .movie)
     }
 
+    /// Remplace le repertoire de stockage (tests uniquement, pour ne jamais toucher au vrai dossier)
+    nonisolated(unsafe) static var audioStorageOverride: URL?
+
     /// Repertoire persistant pour stocker les fichiers audio importes
     private static var audioStorageDirectory: URL {
+        if let audioStorageOverride { return audioStorageOverride }
         let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
         ).first!

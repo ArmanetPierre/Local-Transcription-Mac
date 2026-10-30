@@ -240,9 +240,15 @@ final class ProjectDeletionTests: XCTestCase {
         let container = try ModelContainer(for: TranscriptionProject.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let context = container.mainContext
         let vm = TranscriptionListVM()
-        let storage = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Voxa/Audio", isDirectory: true)
+        // Dossier temporaire a la place du vrai dossier audio de Voxa
+        let storage = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VoxaAudioTest-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: storage, withIntermediateDirectories: true)
+        TranscriptionListVM.audioStorageOverride = storage
+        defer {
+            TranscriptionListVM.audioStorageOverride = nil
+            try? FileManager.default.removeItem(at: storage)
+        }
         let stored = storage.appendingPathComponent("test-\(UUID().uuidString).m4a")
         let outside = FileManager.default.temporaryDirectory.appendingPathComponent("outside-\(UUID().uuidString).m4a")
         FileManager.default.createFile(atPath: stored.path, contents: Data([1]))
