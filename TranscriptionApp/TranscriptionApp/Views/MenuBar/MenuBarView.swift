@@ -40,7 +40,7 @@ struct MenuBarView: View {
             // Actions
             if listVM.isProcessing {
                 Button {
-                    listVM.cancelCurrent()
+                    listVM.cancelCurrent(modelContext: recordingVM.modelContainer?.mainContext)
                 } label: {
                     Label("Cancel", systemImage: "xmark.circle")
                 }

@@ -7,7 +7,8 @@ import VoxaEngine
 //   voxa-engine --audio fichier.m4a --json-protocol [--language fr]
 //               [--embeddings-file speaker_embeddings.json] [--num-speakers N]
 //               [--models-dir DIR] [--cluster-threshold 0.7] [--no-diarize] [--parallel]
-//   voxa-engine --prepare [--models-dir DIR]     (telecharge et prepare les modeles)
+//   voxa-engine --prepare [--models-dir DIR] [--whisper-model VARIANTE] [--no-prewarm]
+//                                                (telecharge et prepare les modeles)
 
 func emit(_ object: [String: Any]) {
     guard let data = try? JSONSerialization.data(withJSONObject: object),
@@ -19,7 +20,7 @@ func encode(_ event: EngineEvent) {
     switch event {
     case let .initialize(duration, language):
         var msg: [String: Any] = ["type": "init", "audio_file": "", "audio_duration_sec": duration,
-                                  "model": NativeEngine.whisperModel, "diarization_enabled": true]
+                                  "model": engine.whisperVariant, "diarization_enabled": true]
         if let language { msg["language"] = language }
         emit(msg)
     case let .stepStart(step, number, total):
@@ -68,12 +69,51 @@ func value(_ name: String) -> String? {
 let defaultModels = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     .appendingPathComponent("Voxa/Models", isDirectory: true)
 let modelsDir = value("--models-dir").map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) } ?? defaultModels
-let engine = NativeEngine(modelsDirectory: modelsDir)
+let engine = NativeEngine(modelsDirectory: modelsDir, whisperVariant: value("--whisper-model") ?? NativeEngine.whisperModel)
+
+/// Duree de chaque phase de la preparation (mesures du premier lancement)
+final class PhaseClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var current: PreparationProgress.Phase?
+    private var since = Date()
+    private var lastPercent = -1
+
+    func update(_ progress: PreparationProgress) {
+        lock.lock()
+        defer { lock.unlock() }
+        if progress.phase != current {
+            if let current {
+                emit(["type": "phase_complete", "phase": "\(current)", "duration_sec": (Date().timeIntervalSince(since) * 10).rounded() / 10])
+            }
+            current = progress.phase
+            since = Date()
+            lastPercent = -1
+        }
+        if let fraction = progress.downloadFraction, Int(fraction * 100) / 10 != lastPercent {
+            lastPercent = Int(fraction * 100) / 10
+            emit(["type": "download_progress", "percent": Int(fraction * 100),
+                  "mb": progress.bytesDownloaded / 1_000_000, "total_mb": progress.bytesTotal / 1_000_000])
+        }
+    }
+
+    func finish() {
+        update(PreparationProgress(phase: .loading))
+        lock.lock()
+        defer { lock.unlock() }
+        emit(["type": "phase_complete", "phase": "loading", "duration_sec": (Date().timeIntervalSince(since) * 10).rounded() / 10])
+    }
+}
 
 do {
     if arguments.contains("--prepare") {
         let start = Date()
-        try await engine.prepare { emit(["type": "log", "level": "info", "message": $0]) }
+        let clock = PhaseClock()
+        try await engine.prepare(
+            prewarm: !arguments.contains("--no-prewarm"),
+            progress: { clock.update($0) },
+            log: { emit(["type": "log", "level": "info", "message": $0]) }
+        )
+        clock.finish()
         emit(["type": "log", "level": "info", "message": "Modeles prets en \(Int(Date().timeIntervalSince(start))) s"])
         exit(0)
     }

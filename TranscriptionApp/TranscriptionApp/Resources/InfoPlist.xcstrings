@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSMicrophoneUsageDescription" : {
+      "comment" : "Texte de la demande d'acces au micro (macOS)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voxa uses the microphone to record your voice during meetings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voxa utilise le micro pour enregistrer votre voix pendant les réunions."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

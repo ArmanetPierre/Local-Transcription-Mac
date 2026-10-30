@@ -116,10 +116,8 @@ final class TranscriptionDetailVM {
             return
         }
 
-        if clearExisting {
-            project.speakerSummaries = [:]
-            project.meetingReport = nil
-        }
+        // Les anciens resultats ne sont remplaces qu'en cas de succes (plus bas) :
+        // un echec d'Ollama ne doit pas effacer un compte rendu existant
 
         let selectedModel = OllamaModel(rawValue:
             UserDefaults.standard.string(forKey: "ollama_model")

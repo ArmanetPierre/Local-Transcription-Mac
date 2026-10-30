@@ -429,16 +429,20 @@ final class DependencyManager {
         process.arguments = arguments
         process.environment = Self.processEnvironment
 
+        // Sortie ignoree, erreurs gardees (fin) : les tubes sont vides au fil de l'eau,
+        // sinon un processus bavard (> 64 Ko) se bloque et l'attente ne finit jamais
         let stderr = Pipe()
-        process.standardOutput = Pipe()
+        process.standardOutput = FileHandle.nullDevice
         process.standardError = stderr
+        let stderrTail = StderrTail()
+        stderr.fileHandleForReading.readabilityHandler = { stderrTail.append($0.availableData) }
 
-        try process.run()
-        process.waitUntilExit()
+        try await Self.runAndWait(process)
+        stderr.fileHandleForReading.readabilityHandler = nil
+        stderrTail.append(stderr.fileHandleForReading.readDataToEndOfFile())
 
         if process.terminationStatus != 0 {
-            let errData = stderr.fileHandleForReading.readDataToEndOfFile()
-            let errStr = String(data: errData, encoding: .utf8) ?? "Unknown error"
+            let errStr = stderrTail.text.isEmpty ? "Unknown error" : stderrTail.text
             throw SetupError.processExited(code: process.terminationStatus, stderr: errStr)
         }
     }
@@ -454,7 +458,7 @@ final class DependencyManager {
         process.standardOutput = stdout
         process.standardError = stderr
 
-        var stderrContent = ""
+        let stderrContent = StderrTail()
 
         // Read stdout line by line for progress
         stdout.fileHandleForReading.readabilityHandler = { [weak self] handle in
@@ -468,7 +472,7 @@ final class DependencyManager {
         stderr.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             guard !data.isEmpty, let line = String(data: data, encoding: .utf8) else { return }
-            stderrContent += line
+            stderrContent.append(data)
             // pip progress often comes on stderr
             Task { @MainActor in
                 // Filter out noisy pip lines, only show meaningful ones
@@ -484,20 +488,27 @@ final class DependencyManager {
             }
         }
 
-        try process.run()
-
-        // Wait for process in background
-        await withCheckedContinuation { continuation in
-            process.terminationHandler = { _ in
-                continuation.resume()
-            }
-        }
+        try await Self.runAndWait(process)
 
         stdout.fileHandleForReading.readabilityHandler = nil
         stderr.fileHandleForReading.readabilityHandler = nil
 
         if process.terminationStatus != 0 {
-            throw SetupError.processExited(code: process.terminationStatus, stderr: stderrContent)
+            throw SetupError.processExited(code: process.terminationStatus, stderr: stderrContent.text)
+        }
+    }
+
+    /// Lance le processus et attend sa fin sans bloquer de thread. Le gestionnaire de fin
+    /// est installe AVANT le lancement : un processus tres court ne peut pas le rater.
+    private static func runAndWait(_ process: Process) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            process.terminationHandler = { _ in continuation.resume() }
+            do {
+                try process.run()
+            } catch {
+                process.terminationHandler = nil
+                continuation.resume(throwing: error)
+            }
         }
     }
 

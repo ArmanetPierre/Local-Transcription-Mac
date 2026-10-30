@@ -24,7 +24,7 @@ struct RecordingMenuBarSection: View {
             .padding(.vertical, 8)
 
             Button {
-                recordingVM.stopAndTranscribe(listVM: listVM)
+                recordingVM.stopAndTranscribe(listVM: listVM, reason: "barre des menus")
             } label: {
                 Label("Stop and transcribe", systemImage: "stop.circle.fill")
             }

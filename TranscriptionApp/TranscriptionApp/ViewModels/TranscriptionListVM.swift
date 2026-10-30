@@ -3,6 +3,9 @@ import Foundation
 import SwiftData
 import UniformTypeIdentifiers
 
+/// File de transcription. Tout sur le main actor : elle manipule le mainContext
+/// SwiftData et l'etat affiche (avant, la suite de la file tournait hors du thread principal).
+@MainActor
 @Observable
 final class TranscriptionListVM {
     var searchText = ""
@@ -13,6 +16,8 @@ final class TranscriptionListVM {
 
     private let bridge = PythonBridge()
     private var processingTask: Task<Void, Never>?
+    /// L'app se ferme : la transcription en cours reprendra au prochain lancement
+    private var isQuitting = false
 
     var isProcessing: Bool {
         bridge.isRunning
@@ -20,7 +25,7 @@ final class TranscriptionListVM {
 
     // MARK: - Import
 
-    static let supportedTypes: [UTType] = [
+    nonisolated static let supportedTypes: [UTType] = [
         .audio,
         .mpeg4Audio,
         .wav,
@@ -34,7 +39,7 @@ final class TranscriptionListVM {
     ]
 
     /// Vrai si le fichier est une video (on n'en garde que la piste audio)
-    static func isVideo(_ url: URL) -> Bool {
+    nonisolated static func isVideo(_ url: URL) -> Bool {
         guard let type = UTType(filenameExtension: url.pathExtension.lowercased()) else { return false }
         return type.conforms(to: .movie)
     }
@@ -53,7 +58,7 @@ final class TranscriptionListVM {
 
     /// Copie un fichier audio vers le stockage persistant de l'app.
     /// Gere les URLs security-scoped (file importer) et les fichiers temporaires (drag & drop).
-    private func copyAudioToStorage(_ sourceURL: URL) -> URL {
+    private func copyAudioToStorage(_ sourceURL: URL) throws -> URL {
         let accessing = sourceURL.startAccessingSecurityScopedResource()
         defer {
             if accessing { sourceURL.stopAccessingSecurityScopedResource() }
@@ -63,14 +68,11 @@ final class TranscriptionListVM {
         let fileName = "\(UUID().uuidString)_\(sourceURL.lastPathComponent)"
         let destURL = Self.audioStorageDirectory.appendingPathComponent(fileName)
 
-        do {
-            try FileManager.default.copyItem(at: sourceURL, to: destURL)
-            print("[ListVM] Audio copie vers: \(destURL.path)")
-            return destURL
-        } catch {
-            print("[ListVM] ERREUR copie audio: \(error) - utilisation du chemin original")
-            return sourceURL
-        }
+        // Echec (disque plein...) : on remonte l'erreur plutot que de pointer vers
+        // un fichier temporaire ou un dossier qui va etre supprime
+        try FileManager.default.copyItem(at: sourceURL, to: destURL)
+        print("[ListVM] Audio copie vers: \(destURL.path)")
+        return destURL
     }
 
     /// Extrait la piste audio d'une video en .m4a dans le stockage de l'app.
@@ -133,12 +135,21 @@ final class TranscriptionListVM {
         // du drag & drop ou fileImporter sont nettoyees apres l'import)
         let storedURL = Self.isVideo(url)
             ? try await extractAudioToStorage(url)
-            : copyAudioToStorage(url)
+            : try copyAudioToStorage(url)
         let project = TranscriptionProject.create(audioURL: storedURL)
         project.title = url.deletingPathExtension().lastPathComponent
         project.language = language
         modelContext.insert(project)
-        modelContext.saveLogged("import")
+        // Sauvegarde verifiee : l'appelant (enregistrement) supprime sa copie de travail
+        // seulement si le projet est bien enregistre
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.delete(project)
+            try? FileManager.default.removeItem(at: storedURL)
+            print("[ListVM] ERREUR sauvegarde de l'import: \(error)")
+            throw error
+        }
         batchQueue.append(storedURL)
 
         if !bridge.isRunning && currentProject == nil {
@@ -154,7 +165,16 @@ final class TranscriptionListVM {
         let interrupted: Set<String> = ["pending", "transcribing", "diarizing", "merging"]
         let descriptor = FetchDescriptor<TranscriptionProject>(sortBy: [SortDescriptor(\.createdAt)])
         let projects = ((try? modelContext.fetch(descriptor)) ?? []).filter {
-            interrupted.contains($0.statusRaw) && !batchQueue.contains(URL(fileURLWithPath: $0.audioFilePath))
+            interrupted.contains($0.statusRaw)
+                && $0.id != currentProject?.id
+                && !batchQueue.contains(URL(fileURLWithPath: $0.audioFilePath))
+        }
+        // Generation de resume interrompue : sinon le projet reste bloque sur la progression
+        let generating = FetchDescriptor<TranscriptionProject>(
+            predicate: #Predicate { $0.statusRaw == "generatingSummary" }
+        )
+        for project in (try? modelContext.fetch(generating)) ?? [] {
+            project.status = .completed
         }
         for project in projects {
             guard FileManager.default.fileExists(atPath: project.audioFilePath) else {
@@ -181,6 +201,20 @@ final class TranscriptionListVM {
             print("[ListVM] Queue vide, rien a traiter")
             return
         }
+        #if APPSTORE
+        // Modeles pas encore prets (premier lancement, mise a jour) : les fichiers
+        // restent en attente dans la file, elle reprend d'elle-meme une fois prets
+        let models = NativeModels.shared
+        if !models.isPrepared {
+            print("[ListVM] Modeles en preparation : \(batchQueue.count) fichier(s) en attente")
+            models.onReady = { [weak self] in
+                guard let self, !self.bridge.isRunning, self.currentProject == nil else { return }
+                self.processNext(modelContext: modelContext)
+            }
+            models.prepareInBackgroundIfNeeded()
+            return
+        }
+        #endif
         let url = batchQueue.removeFirst()
         print("[ListVM] processNext: \(url.lastPathComponent), restant en queue: \(batchQueue.count)")
 
@@ -190,7 +224,9 @@ final class TranscriptionListVM {
             predicate: #Predicate { $0.audioFilePath == path && $0.statusRaw == "pending" }
         )
         guard let project = try? modelContext.fetch(descriptor).first else {
-            print("[ListVM] ERREUR: projet introuvable pour \(url.lastPathComponent)")
+            // Projet supprime entre-temps : passer au suivant plutot que bloquer la file
+            print("[ListVM] Projet introuvable pour \(url.lastPathComponent), suivant")
+            processNext(modelContext: modelContext)
             return
         }
         print("[ListVM] Projet trouve: \(project.title) (id: \(project.id))")
@@ -412,6 +448,12 @@ final class TranscriptionListVM {
             estimationService.reset()
 
         } catch {
+            if isQuitting {
+                // Pas un echec : l'app se ferme, la transcription reprendra au prochain lancement
+                print("[ListVM] Transcription interrompue par la fermeture de l'app")
+                currentProject = nil
+                return
+            }
             let elapsed = Date().timeIntervalSince(startTime)
             print("[ListVM] EXCEPTION apres \(String(format: "%.1f", elapsed))s et \(messageCount) messages: \(error)")
             print("[ListVM] Error localizedDescription: \(error.localizedDescription)")
@@ -430,14 +472,14 @@ final class TranscriptionListVM {
     }
 
     /// Au-dela de cette duree, un bloc s'arrete a la prochaine fin de phrase
-    static let mergeSoftLimit: Double = 60
+    nonisolated static let mergeSoftLimit: Double = 60
     /// Et au-dela de celle-ci, il s'arrete quoi qu'il arrive (texte sans ponctuation)
-    static let mergeHardLimit: Double = 180
+    nonisolated static let mergeHardLimit: Double = 180
 
     /// Fusionne les segments consecutifs du meme speaker en paragraphes lisibles
     /// (seulement si speaker non-nil, sinon on garde les segments separes).
     /// Un long monologue est coupe en paragraphes d'environ une minute.
-    static func mergeConsecutiveSpeakerSegments(_ segments: [ResultSegment]) -> [ResultSegment] {
+    nonisolated static func mergeConsecutiveSpeakerSegments(_ segments: [ResultSegment]) -> [ResultSegment] {
         var merged: [ResultSegment] = []
         for seg in segments {
             if let last = merged.last,
@@ -461,7 +503,7 @@ final class TranscriptionListVM {
         return merged
     }
 
-    private static func isParagraphFull(_ block: ResultSegment) -> Bool {
+    nonisolated private static func isParagraphFull(_ block: ResultSegment) -> Bool {
         let duration = block.end - block.start
         if duration >= mergeHardLimit { return true }
         guard duration >= mergeSoftLimit else { return false }
@@ -469,8 +511,53 @@ final class TranscriptionListVM {
         return ending.map { ".?!…".contains($0) } ?? false
     }
 
-    func cancelCurrent() {
-        bridge.cancel()
+    /// Annule la transcription en cours et vide la file. Les projets en attente sont
+    /// marques annules (sinon ils restent "en attente" et repartent au prochain lancement).
+    func cancelCurrent(modelContext: ModelContext? = nil) {
+        let queued = batchQueue
         batchQueue.removeAll()
+        bridge.cancel()
+        guard let modelContext, !queued.isEmpty else { return }
+        let paths = Set(queued.map(\.path))
+        let descriptor = FetchDescriptor<TranscriptionProject>(
+            predicate: #Predicate { $0.statusRaw == "pending" }
+        )
+        for project in (try? modelContext.fetch(descriptor)) ?? [] where paths.contains(project.audioFilePath) {
+            project.status = .failed
+            project.errorMessage = String(localized: "Transcription cancelled.")
+        }
+        modelContext.saveLogged("annulation")
+    }
+
+    /// Retire un projet en attente de la file (avant sa suppression).
+    func removeFromQueue(_ project: TranscriptionProject) {
+        batchQueue.removeAll { $0.path == project.audioFilePath }
+    }
+
+    /// Supprime une transcription ET sa copie audio : sinon l'enregistrement restait sur le
+    /// disque alors que l'utilisateur le croyait supprime. Seuls les fichiers du dossier
+    /// audio de Voxa sont effaces, jamais un fichier d'origine de l'utilisateur.
+    func delete(_ project: TranscriptionProject, modelContext: ModelContext) {
+        guard currentProject?.id != project.id else { return }
+        removeFromQueue(project)
+        SpeakerEmbeddingStore.shared.clearPending(projectId: project.id)
+        let audio = URL(fileURLWithPath: project.audioFilePath).standardizedFileURL
+        modelContext.delete(project)
+        do {
+            try modelContext.save()
+        } catch {
+            print("[ListVM] ERREUR suppression: \(error)")
+            return
+        }
+        let storage = Self.audioStorageDirectory.standardizedFileURL.path + "/"
+        if audio.path.hasPrefix(storage) {
+            try? FileManager.default.removeItem(at: audio)
+        }
+    }
+
+    /// Fermeture de l'app : arreter le moteur sans marquer la transcription en echec.
+    func stopForQuit() {
+        isQuitting = true
+        bridge.cancel()
     }
 }

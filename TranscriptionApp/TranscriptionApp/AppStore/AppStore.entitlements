@@ -8,14 +8,8 @@
 	<!-- Importer des enregistrements, exporter des transcriptions -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-	<!-- Memoriser les dossiers autorises pour Claude Code (MCP) -->
-	<key>com.apple.security.files.bookmarks.app-scope</key>
-	<true/>
-	<!-- Telechargement des modeles (Hugging Face), Ollama local -->
+	<!-- Telechargement des modeles (Hugging Face), Ollama local (client uniquement) -->
 	<key>com.apple.security.network.client</key>
-	<true/>
-	<!-- API locale (127.0.0.1) pour le serveur MCP de Claude Code -->
-	<key>com.apple.security.network.server</key>
 	<true/>
 	<!-- Enregistrement de reunion : micro -->
 	<key>com.apple.security.device.audio-input</key>

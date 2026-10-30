@@ -37,38 +37,115 @@ public struct EngineOptions: Sendable {
     public init() {}
 }
 
+/// Etape de la preparation des modeles (premier lancement), pour l'interface.
+public struct PreparationProgress: Sendable, Equatable {
+    public enum Phase: Sendable, Equatable {
+        /// Telechargement du modele de transcription (octets connus)
+        case downloading
+        /// Petits modeles d'identification des intervenants
+        case downloadingSpeakerModels
+        /// Core ML specialise les modeles pour la puce (hors ligne, quelques minutes)
+        case optimizing
+        /// Chargement en memoire (rapide)
+        case loading
+    }
+
+    public var phase: Phase
+    public var bytesDownloaded: Int64 = 0
+    /// 0 si inconnu
+    public var bytesTotal: Int64 = 0
+
+    public init(phase: Phase, bytesDownloaded: Int64 = 0, bytesTotal: Int64 = 0) {
+        self.phase = phase
+        self.bytesDownloaded = bytesDownloaded
+        self.bytesTotal = bytesTotal
+    }
+
+    /// Avancement du telechargement (0...1), nil si inconnu
+    public var downloadFraction: Double? {
+        guard bytesTotal > 0 else { return nil }
+        return min(1, Double(bytesDownloaded) / Double(bytesTotal))
+    }
+}
+
 /// Transcription + diarisation natives (WhisperKit + SpeakerKit, Core ML).
 public final class NativeEngine {
     public static let whisperModel = "large-v3-v20240930_turbo"
+    /// Variante compressee (645 Mo au lieu de 1,64 Go), utilisee par l'edition App Store.
+    /// Banc 64 min : WER 18,9 % (contre 18,6 %), erreur d'intervenant 3,6 % (3,5 %),
+    /// transcription un peu plus rapide (RTF 0,063 contre 0,072).
+    public static let compactWhisperModel = "large-v3-v20240930_turbo_632MB"
+    static let whisperRepo = "argmaxinc/whisperkit-coreml"
+    /// Fichier ecrit dans le dossier du modele une fois le telechargement complet
+    static let completeMarker = ".voxa-download-complete"
 
     /// Dossier des modeles. Il doit rester stable : Core ML prepare les modeles
     /// pour la puce au premier chargement (plusieurs minutes), par emplacement.
     public let modelsDirectory: URL
+    /// Variante WhisperKit utilisee (par defaut `whisperModel`)
+    public let whisperVariant: String
     private var whisperKit: WhisperKit?
     private var speakerKit: SpeakerKit?
 
-    public init(modelsDirectory: URL) {
+    public init(modelsDirectory: URL, whisperVariant: String = NativeEngine.whisperModel) {
         self.modelsDirectory = modelsDirectory
+        self.whisperVariant = whisperVariant
+    }
+
+    /// Racine du depot WhisperKit dans le cache local (meme disposition que HubApi)
+    var whisperRepoFolder: URL {
+        modelsDirectory.appendingPathComponent("models", isDirectory: true)
+            .appendingPathComponent(Self.whisperRepo, isDirectory: true)
+    }
+
+    /// Dossier local du modele de transcription
+    public var whisperModelFolder: URL {
+        whisperRepoFolder.appendingPathComponent("openai_whisper-\(whisperVariant)", isDirectory: true)
+    }
+
+    /// Le modele de transcription est-il entierement telecharge ? (sans reseau)
+    public var isWhisperModelDownloaded: Bool {
+        Self.isCompleteModelFolder(whisperModelFolder, metadataFolder: metadataFolder(for: whisperModelFolder))
+    }
+
+    private func metadataFolder(for modelFolder: URL) -> URL {
+        whisperRepoFolder.appendingPathComponent(".cache/huggingface/download", isDirectory: true)
+            .appendingPathComponent(modelFolder.lastPathComponent, isDirectory: true)
+    }
+
+    /// Complet = marqueur ecrit par Voxa, ou (dossiers telecharges par une version
+    /// precedente) les trois modeles presents sans fichier .incomplete en attente.
+    static func isCompleteModelFolder(_ folder: URL, metadataFolder: URL) -> Bool {
+        let fm = FileManager.default
+        if fm.fileExists(atPath: folder.appendingPathComponent(completeMarker).path) { return true }
+        for name in ["MelSpectrogram", "AudioEncoder", "TextDecoder"] {
+            let weights = folder.appendingPathComponent("\(name).mlmodelc/coremldata.bin")
+            if !fm.fileExists(atPath: weights.path) { return false }
+        }
+        if let enumerator = fm.enumerator(at: metadataFolder, includingPropertiesForKeys: nil) {
+            for case let url as URL in enumerator where url.pathExtension == "incomplete" {
+                return false
+            }
+        }
+        return true
     }
 
     /// Telecharge et prepare les modeles (long la premiere fois).
     /// prewarm : specialise les modeles pour la puce (a faire une fois, a la preparation).
-    public func prepare(prewarm: Bool = true, log: (String) -> Void = { _ in }) async throws {
+    /// Le telechargement reprend la ou il s'etait arrete (fichiers .incomplete).
+    public func prepare(
+        prewarm: Bool = true,
+        progress: @escaping @Sendable (PreparationProgress) -> Void = { _ in },
+        log: (String) -> Void = { _ in }
+    ) async throws {
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
+        var folder: URL?
         if whisperKit == nil {
-            log("Chargement de WhisperKit (\(Self.whisperModel))...")
-            whisperKit = try await WhisperKit(WhisperKitConfig(
-                model: Self.whisperModel,
-                downloadBase: modelsDirectory,
-                verbose: false,
-                logLevel: .error,
-                prewarm: prewarm,
-                load: true,
-                download: true
-            ))
+            folder = try await downloadWhisperModelIfNeeded(progress: progress, log: log)
         }
         if speakerKit == nil {
-            log("Chargement de SpeakerKit...")
+            log("Loading SpeakerKit")
+            progress(PreparationProgress(phase: .downloadingSpeakerModels))
             speakerKit = try await SpeakerKit(PyannoteConfig(
                 downloadBase: modelsDirectory.path,
                 download: true,
@@ -77,6 +154,135 @@ public final class NativeEngine {
                 logLevel: .error
             ))
         }
+        if whisperKit == nil, let folder {
+            log("Loading WhisperKit (\(whisperVariant), prewarm: \(prewarm))")
+            progress(PreparationProgress(phase: prewarm ? .optimizing : .loading))
+            whisperKit = try await WhisperKit(WhisperKitConfig(
+                model: whisperVariant,
+                downloadBase: modelsDirectory,
+                modelFolder: folder.path,
+                tokenizerFolder: modelsDirectory,
+                verbose: false,
+                logLevel: .error,
+                prewarm: prewarm,
+                load: true,
+                download: false
+            ))
+        }
+    }
+
+    /// Telecharge le modele de transcription s'il manque (progression en octets)
+    /// ainsi que son tokenizer. Rend le dossier local du modele.
+    private func downloadWhisperModelIfNeeded(
+        progress: @escaping @Sendable (PreparationProgress) -> Void,
+        log: (String) -> Void
+    ) async throws -> URL {
+        let folder = whisperModelFolder
+        if isWhisperModelDownloaded {
+            log("WhisperKit model already downloaded: \(folder.lastPathComponent)")
+        } else {
+            log("Downloading WhisperKit model \(whisperVariant)")
+            let total = (try? await Self.remoteSize(repo: Self.whisperRepo, path: folder.lastPathComponent)) ?? 0
+            let metadata = metadataFolder(for: folder)
+            progress(PreparationProgress(phase: .downloading, bytesDownloaded: Self.bytesOnDisk([folder, metadata]), bytesTotal: total))
+            // Octets reellement ecrits sur le disque (fichiers finis + .incomplete) : la
+            // progression de HubApi compte les fichiers, pas leur taille.
+            let monitor = Task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 400_000_000)
+                    progress(PreparationProgress(phase: .downloading, bytesDownloaded: Self.bytesOnDisk([folder, metadata]), bytesTotal: total))
+                }
+            }
+            defer { monitor.cancel() }
+            let downloaded = try await WhisperKit.download(
+                variant: whisperVariant,
+                downloadBase: modelsDirectory,
+                from: Self.whisperRepo
+            )
+            try Task.checkCancellation()
+            guard downloaded.resolvingSymlinksInPath().path == folder.resolvingSymlinksInPath().path else {
+                throw NativeEngineError.unexpectedModelFolder(downloaded.path)
+            }
+            monitor.cancel()
+            progress(PreparationProgress(phase: .downloading, bytesDownloaded: max(total, Self.bytesOnDisk([folder])), bytesTotal: total))
+        }
+        // Tokenizer (quelques Mo) : telecharge maintenant, pour que toute la partie
+        // reseau soit finie avant l'optimisation (longue, hors ligne)
+        _ = try await ModelUtilities.loadTokenizer(for: .largev3, tokenizerFolder: modelsDirectory)
+        FileManager.default.createFile(atPath: folder.appendingPathComponent(Self.completeMarker).path, contents: Data())
+        return folder
+    }
+
+    /// Supprime les autres variantes du modele de transcription (apres un changement de
+    /// modele), une fois la nouvelle prete. Rend les dossiers supprimes.
+    @discardableResult
+    public func removeOtherWhisperVariants() -> [URL] {
+        let fm = FileManager.default
+        let keep = whisperModelFolder.lastPathComponent
+        let metadataRoot = whisperRepoFolder.appendingPathComponent(".cache/huggingface/download", isDirectory: true)
+        var removed: [URL] = []
+        for root in [whisperRepoFolder, metadataRoot] {
+            let entries = (try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+            for entry in entries where entry.lastPathComponent.hasPrefix("openai_whisper-") && entry.lastPathComponent != keep {
+                if (try? fm.removeItem(at: entry)) != nil { removed.append(entry) }
+            }
+        }
+        return removed
+    }
+
+    /// Erreur de reseau (pas de connexion, delai depasse...) : le telechargement
+    /// pourra reprendre plus tard, la ou il s'etait arrete.
+    public static func isNetworkError(_ error: Error) -> Bool {
+        var current: Error? = error
+        var depth = 0
+        while let error = current, depth < 5 {
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain { return true }
+            current = nsError.userInfo[NSUnderlyingErrorKey] as? Error
+            depth += 1
+        }
+        // Erreurs de HubApi/WhisperKit qui n'exposent l'erreur reseau que dans leur texte
+        let text = String(describing: error).lowercased()
+        return ["offline", "internet", "network", "timed out", "not connected", "nsurlerrordomain", "connection"]
+            .contains { text.contains($0) }
+    }
+
+    /// Taille totale des fichiers d'un dossier du depot (API Hugging Face)
+    static func remoteSize(repo: String, path: String) async throws -> Int64 {
+        var components = URLComponents(string: "https://huggingface.co/api/models/\(repo)/tree/main/\(path)")!
+        components.queryItems = [URLQueryItem(name: "recursive", value: "true")]
+        var request = URLRequest(url: components.url!)
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+        return try parseTreeSize(data)
+    }
+
+    /// Somme des tailles d'une reponse /tree (taille LFS si presente)
+    static func parseTreeSize(_ data: Data) throws -> Int64 {
+        guard let entries = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw URLError(.cannotParseResponse)
+        }
+        return entries.reduce(Int64(0)) { sum, entry in
+            guard entry["type"] as? String == "file" else { return sum }
+            let lfs = (entry["lfs"] as? [String: Any])?["size"] as? NSNumber
+            let size = lfs ?? (entry["size"] as? NSNumber)
+            return sum + (size?.int64Value ?? 0)
+        }
+    }
+
+    /// Octets presents sur le disque sous ces dossiers (hors fichiers .metadata)
+    static func bytesOnDisk(_ folders: [URL]) -> Int64 {
+        let fm = FileManager.default
+        var total: Int64 = 0
+        for folder in folders {
+            guard let enumerator = fm.enumerator(at: folder, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) else { continue }
+            for case let url as URL in enumerator where url.pathExtension != "metadata" {
+                let values = try? url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+                if values?.isRegularFile == true { total += Int64(values?.fileSize ?? 0) }
+            }
+        }
+        return total
     }
 
     public func transcribe(
@@ -85,7 +291,7 @@ public final class NativeEngine {
         emit: @escaping @Sendable (EngineEvent) -> Void
     ) async throws {
         let t0 = Date()
-        try await prepare(prewarm: false) { emit(.log(level: "info", message: $0)) }
+        try await prepare(prewarm: false, log: { emit(.log(level: "info", message: $0)) })
         guard let whisperKit, let speakerKit else { return }
 
         let audio = try AudioProcessor.loadAudioAsFloatArray(fromPath: audioPath)
@@ -145,13 +351,10 @@ public final class NativeEngine {
             concurrentWorkerCount: 4,
             chunkingStrategy: .vad
         )
-        // Amorce ponctuee : WhisperKit decode chaque morceau (VAD) sans le texte
-        // precedent ; sans amorce, Whisper perd souvent ponctuation et majuscules
-        // et deforme des mots ("il ya", "elle est allee a l'est" pour "elle essaie").
-        if let prompt = language.flatMap({ Self.punctuationPrompts[$0] }), let tokenizer = whisperKit.tokenizer {
-            decoding.promptTokens = tokenizer.encode(text: " " + prompt)
-                .filter { $0 < tokenizer.specialTokens.specialTokenBegin }
-        }
+        // Pas d'amorce (promptTokens) : elle ameliorait un peu la ponctuation, mais
+        // decalait les horodatages des mots de plusieurs secondes, et donc
+        // l'attribution aux intervenants (banc 64 min : erreurs d'intervenant
+        // 5,4 % -> 3,5 %, WER 20,2 % -> 18,6 %, mots perdus 12 % -> 8,5 %).
         let results: [TranscriptionResult]
         do {
             results = try await whisperKit.transcribe(audioArray: audio, decodeOptions: decoding)
@@ -229,6 +432,10 @@ public final class NativeEngine {
 
             // 3. Attribution mot par mot
             emit(.stepStart(step: "speaker_assignment", number: 3, total: totalSteps))
+            // Diagnostic : VOXA_DEBUG_DUMP=fichier.json ecrit les tours et les mots horodates
+            if let dump = ProcessInfo.processInfo.environment["VOXA_DEBUG_DUMP"] {
+                Self.writeDebugDump(to: dump, segments: segments, turns: turns)
+            }
             segments = PostProcessing.splitBySpeaker(segments, turns: turns)
         }
 
@@ -241,17 +448,6 @@ public final class NativeEngine {
             speakerMatchScores: matchScores
         )))
     }
-
-    /// Phrases d'amorce ponctuees, par langue
-    static let punctuationPrompts: [String: String] = [
-        "fr": "Bonjour. Voici la transcription de la réunion, avec la ponctuation.",
-        "en": "Hello. Here is the transcript of the meeting, with punctuation.",
-        "es": "Hola. Esta es la transcripción de la reunión, con puntuación.",
-        "de": "Hallo. Hier ist das Protokoll der Besprechung, mit Zeichensetzung.",
-        "it": "Ciao. Ecco la trascrizione della riunione, con la punteggiatura.",
-        "pt": "Olá. Esta é a transcrição da reunião, com pontuação.",
-        "nl": "Hallo. Hier is het verslag van de vergadering, met interpunctie.",
-    ]
 
     /// Langue dominante : probabilites cumulees sur 3 passages de 30 s (debut,
     /// milieu, fin), pour ne pas se fier au seul debut d'une reunion.
@@ -280,6 +476,16 @@ public final class NativeEngine {
     }
 }
 
+public enum NativeEngineError: LocalizedError {
+    case unexpectedModelFolder(String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .unexpectedModelFolder(let path): "Unexpected model folder: \(path)"
+        }
+    }
+}
+
 /// Laisse passer la progression de la diarisation seulement quand l'app suit cette etape
 final class ProgressGate: @unchecked Sendable {
     private let lock = NSLock()
@@ -295,5 +501,22 @@ final class ProgressGate: @unchecked Sendable {
         lock.lock()
         opened = true
         lock.unlock()
+    }
+
+}
+
+extension NativeEngine {
+    /// Donnees brutes de l'attribution (tours de diarisation, mots horodates), pour les tests.
+    static func writeDebugDump(to path: String, segments: [TranscriptSegment], turns: [SpeakerTurn]) {
+        let json: [String: Any] = [
+            "turns": turns.map { ["start": $0.start, "end": $0.end, "speaker": $0.speaker] },
+            "segments": segments.map { segment in
+                ["start": segment.start, "end": segment.end, "text": segment.text,
+                 "words": segment.words.map { ["text": $0.text, "start": $0.start, "end": $0.end] }]
+            },
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
     }
 }

@@ -51,9 +51,9 @@ final class InProcessEngineBridge {
                 self.isRunning = true
                 defer { self.isRunning = false }
                 do {
-                    // Premiere utilisation ou mise a jour : preparation des modeles
+                    // Normalement deja fait : la file attend que les modeles soient prets
                     if !NativeModels.shared.isPrepared {
-                        continuation.yield(.log(LogMessage(level: "info", message: "Preparation des modeles")))
+                        continuation.yield(.log(LogMessage(level: "info", message: "Preparing models")))
                         continuation.yield(.stepStart(StepStartMessage(step: "preparing_models", stepNumber: 0, totalSteps: 3)))
                         try await NativeModels.shared.prepare()
                     }
@@ -86,7 +86,7 @@ final class InProcessEngineBridge {
     static func message(for event: EngineEvent, model: WhisperModel) -> PythonMessage {
         switch event {
         case let .initialize(duration, language):
-            return .initialize(InitMessage(audioFile: "", audioDurationSec: duration, model: NativeEngine.whisperModel,
+            return .initialize(InitMessage(audioFile: "", audioDurationSec: duration, model: NativeEngine.compactWhisperModel,
                                            language: language, diarizationEnabled: true))
         case let .stepStart(step, number, total):
             return .stepStart(StepStartMessage(step: step, stepNumber: number, totalSteps: total))

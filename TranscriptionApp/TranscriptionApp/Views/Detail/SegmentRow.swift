@@ -9,6 +9,7 @@ struct SegmentRow: View {
 
     @State private var showRenamePopover = false
     @State private var renameText = ""
+    @State private var pendingSave: Task<Void, Never>?
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -73,11 +74,23 @@ struct SegmentRow: View {
             // Text content
             TextField("", text: $segment.text, axis: .vertical)
                 .textFieldStyle(.plain)
+                .onSubmit { segment.modelContext?.saveLogged("correction texte") }
+                .onChange(of: segment.text) { scheduleSave() }
                 .font(isPlaying ? .body.bold() : .body)
                 .lineLimit(1...50)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { onSeek() }
+    }
+
+    /// Sauvegarde 2 s apres la derniere frappe (une correction ne doit pas se perdre)
+    private func scheduleSave() {
+        pendingSave?.cancel()
+        pendingSave = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            segment.modelContext?.saveLogged("correction texte")
+        }
     }
 }
