@@ -6,16 +6,16 @@
     <description>Voxa Updates</description>
     <language>en</language>
     <item>
-      <title>Voxa 1.6.0</title>
-      <pubDate>Mon, 05 Oct 2026 04:02:34 +0000</pubDate>
-      <sparkle:version>6</sparkle:version>
-      <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
-      <enclosure url="https://github.com/ArmanetPierre/Local-Transcription-Mac/releases/download/v1.6.0/Voxa.zip"
-                 sparkle:version="6"
-                 sparkle:shortVersionString="1.6.0"
-                 length="3202508"
+      <title>Voxa 1.6.1</title>
+      <pubDate>Fri, 30 Oct 2026 03:30:58 +0000</pubDate>
+      <sparkle:version>7</sparkle:version>
+      <sparkle:shortVersionString>1.6.1</sparkle:shortVersionString>
+      <enclosure url="https://github.com/ArmanetPierre/Local-Transcription-Mac/releases/download/v1.6.1/Voxa.zip"
+                 sparkle:version="7"
+                 sparkle:shortVersionString="1.6.1"
+                 length="3283841"
                  type="application/octet-stream"
-                 sparkle:edSignature="QnvVHK/JeM6k1TJfdQuHpfM+r5DfcP5/8vvEdnEWCeMt357SdlvrkDbpXK9F5sZe8nzDgS3n1a1vPFnGcfVSDQ=="/>
+                 sparkle:edSignature="F++YOpGyzCOcQmQGS6WrVvSaizH4aCivkgUtoV72iAHU/XIGZhgT9Hw9AK2zVB4sK05pXggOxqbxEEdRGG47CA=="/>
     </item>
   </channel>
 </rss>
